@@ -9,6 +9,8 @@ defmodule HttpEx.MixProject do
       docs: docs(),
       elixir: "~> 1.18",
       name: "HTTPEx",
+      organization: "wuunder",
+      package: package(),
       source_url: "https://github.com/wuunder/http_ex",
       start_permanent: Mix.env() == :prod,
       test_coverage: [tool: ExCoveralls],

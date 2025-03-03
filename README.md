@@ -9,6 +9,7 @@ Note: work in progress. Things to come:
 * Add support for different logger backends
 
 ![Build status](https://github.com/wuunder/http_ex/actions/workflows/ci.yml/badge.svg)
+[![Coverage Status](https://coveralls.io/repos/github/wuunder/http_ex/badge.svg?branch=main)](https://coveralls.io/github/wuunder/http_ex?branch=main)
 
 ## Installation
 
