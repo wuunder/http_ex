@@ -4,11 +4,15 @@ defmodule HttpEx.MixProject do
   def project do
     [
       app: :http_ex,
-      version: "0.1.0",
-      elixir: "~> 1.18",
+      deps: deps(),
       dialyzer: dialyzer_config(),
+      docs: docs(),
+      elixir: "~> 1.18",
+      name: "HTTPEx",
+      source_url: "https://github.com/wuunder/http_ex",
       start_permanent: Mix.env() == :prod,
-      deps: deps()
+      test_coverage: [tool: ExCoveralls],
+      version: "0.1.0"
     ]
   end
 
@@ -23,12 +27,34 @@ defmodule HttpEx.MixProject do
   defp deps do
     [
       {:dialyxir, "~> 1.3", optional: true, only: [:dev], runtime: false},
+      {:excoveralls, "~> 0.18.0", optional: true, only: :test},
+      {:ex_doc, "~> 0.31", optional: true, only: :dev, runtime: false},
       {:httpoison, "~> 2.0"},
       {:styler, "~> 1.0", optional: true, only: [:dev, :test]},
       {:nimble_ownership, "~> 1.0"},
       {:tracing, "~> 0.2.0"}
       # {:dep_from_hexpm, "~> 0.3.0"},
       # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"}
+    ]
+  end
+
+  defp package do
+    [
+      name: "http_ex",
+      files: ~w(lib mix.exs CHANGELOG.md LICENSE.md README*),
+      licenses: ["MIT"],
+      links: %{
+        "Changelog" => "https://hexdocs.pm/http_ex/changelog.html",
+        "GitHub" => "https://github.com/wuunder/http_ex",
+        "Docs" => "https://hexdocs.pm/http_ex"
+      }
+    ]
+  end
+
+  defp docs do
+    [
+      main: "HTTPEx",
+      extras: ["README.md", "CHANGELOG.md"]
     ]
   end
 
