@@ -13,8 +13,29 @@ defmodule HTTPEx.Backend.MockTest do
         response: %{status: 200, body: "OK"}
       )
 
-      assert Mock.request(%Request{url: "http://www.example.com", method: :get, body: "GET"}) ==
+      assert Mock.request(%Request{
+               client: :httpoison,
+               url: "http://www.example.com",
+               method: :get,
+               body: "GET"
+             }) ==
                {:ok, %HTTPoison.Response{status_code: 200, body: "OK", headers: []}}
+    end
+
+    test "ok, with finch" do
+      Mock.expect_request!(
+        endpoint: "http://www.example.com",
+        expect_body: "GET",
+        response: %{status: 200, body: "OK"}
+      )
+
+      assert Mock.request(%Request{
+               client: :finch,
+               url: "http://www.example.com",
+               method: :get,
+               body: "GET"
+             }) ==
+               {:ok, %Finch.Response{body: "OK", headers: [], status: 200, trailers: []}}
     end
 
     test "no matches" do
@@ -41,18 +62,21 @@ defmodule HTTPEx.Backend.MockTest do
                    ~r/Maximum number of HTTP calls already made for request/,
                    fn ->
                      Mock.request(%Request{
+                       client: :httpoison,
                        url: "http://www.example.com",
                        method: :get,
                        body: "GET"
                      })
 
                      Mock.request(%Request{
+                       client: :httpoison,
                        url: "http://www.example.com",
                        method: :get,
                        body: "GET"
                      })
 
                      Mock.request(%Request{
+                       client: :httpoison,
                        url: "http://www.example.com",
                        method: :get,
                        body: "GET"
@@ -97,7 +121,12 @@ defmodule HTTPEx.Backend.MockTest do
         response: %{status: 200, body: "OK"}
       )
 
-      assert Mock.request(%Request{url: "http://www.example.com", method: :get, body: "GET"}) ==
+      assert Mock.request(%Request{
+               client: :httpoison,
+               url: "http://www.example.com",
+               method: :get,
+               body: "GET"
+             }) ==
                {:ok, %HTTPoison.Response{status_code: 200, body: "OK", headers: []}}
 
       Mock.verify!(self())

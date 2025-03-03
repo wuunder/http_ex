@@ -18,7 +18,8 @@ defmodule HTTPEx do
   alias HTTPEx.Request
   alias HTTPEx.Response
   alias HTTPEx.Shared
-  alias Plug.Conn.Status
+
+  use HTTPEx.Parsing
 
   @backend Application.compile_env(:http_ex, :backend, HTTPEx.Backend.Default)
   @retry_wait 100
@@ -29,6 +30,9 @@ defmodule HTTPEx do
   ## Examples
 
       iex> HTTPEx.get("http://www.example.com", backend: MockBackend)
+      {:ok, %HTTPEx.Response{body: "OK!", retries: 1, status: 200, parsed_body: nil, headers: []}}
+
+      iex> HTTPEx.get("http://www.example.com", backend: MockBackend, client: :finch)
       {:ok, %HTTPEx.Response{body: "OK!", retries: 1, status: 200, parsed_body: nil, headers: []}}
 
       iex> HTTPEx.get("http://www.example.com/json", headers: [{"Content-Type", "application/json"}], backend: MockBackend)
@@ -61,10 +65,11 @@ defmodule HTTPEx do
   def get(url, options \\ []) when is_binary(url) and is_list(options),
     do:
       request(%Request{
+        client: Keyword.get(options, :client),
         headers: Keyword.get(options, :headers, []),
         method: :get,
         url: url,
-        options: Keyword.delete(options, :headers)
+        options: options |> Keyword.delete(:headers) |> Keyword.delete(:client)
       })
 
   @doc """
@@ -80,11 +85,12 @@ defmodule HTTPEx do
   def post(url, body, options \\ []) when is_binary(url) and is_binary(body) and is_list(options),
     do:
       request(%Request{
+        client: Keyword.get(options, :client),
         body: body,
         headers: Keyword.get(options, :headers, []),
         method: :post,
         url: url,
-        options: Keyword.delete(options, :headers)
+        options: options |> Keyword.delete(:headers) |> Keyword.delete(:client)
       })
 
   @doc """
@@ -94,6 +100,7 @@ defmodule HTTPEx do
 
       iex> request = %HTTPEx.Request{
       ...>   method: :get,
+      ...>   client: :finch,
       ...>   url: "http://www.example.com",
       ...>   options: [backend: MockBackend],
       ...> }
@@ -190,49 +197,6 @@ defmodule HTTPEx do
       |> request_with_retries()
     else
       response
-    end
-  end
-
-  defp to_response(
-         {:ok, %HTTPoison.Response{status_code: status, body: body, headers: headers}},
-         retries
-       )
-       when status < 400,
-       do:
-         {:ok,
-          %Response{
-            status: status,
-            body: body,
-            parsed_body: parse_body(body),
-            headers: headers,
-            retries: retries
-          }}
-
-  defp to_response(
-         {:ok, %HTTPoison.Response{status_code: status, body: body, headers: headers}},
-         retries
-       )
-       when status >= 400,
-       do:
-         {:error,
-          %Error{
-            reason: Status.reason_atom(status),
-            status: status,
-            body: body,
-            parsed_body: parse_body(body),
-            headers: headers,
-            retries: retries
-          }}
-
-  defp to_response({:error, %HTTPoison.Error{} = error}, retries),
-    do: {:error, %Error{reason: error.reason, retries: retries}}
-
-  defp parse_body(body) when body in ["", nil], do: nil
-
-  defp parse_body(body) do
-    case JSON.decode(body) do
-      {:ok, decoded} -> decoded
-      _ -> nil
     end
   end
 
