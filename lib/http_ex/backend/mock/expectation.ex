@@ -10,6 +10,7 @@ defmodule HTTPEx.Backend.Mock.Expectation do
   alias HTTPEx.Shared
 
   defstruct calls: 0,
+            description: nil,
             expects: %{
               body: :any,
               headers: :any,
@@ -40,7 +41,7 @@ defmodule HTTPEx.Backend.Mock.Expectation do
   @type string_with_format_matcher() :: {String.t(), string_formats()}
   @type regex_matcher() :: Regex.t()
   @type wildcard_matcher() :: :any
-  @type keyword_list_matcher() :: list({String.t(), String.t()})
+  @type keyword_list_matcher() :: list({String.t(), String.t() | Regex.t()})
   @type map_matcher() :: map()
   @type enum_matcher() :: atom()
   @type int_matcher() :: integer()
@@ -85,6 +86,7 @@ defmodule HTTPEx.Backend.Mock.Expectation do
 
   @type t() :: %__MODULE__{
           calls: non_neg_integer(),
+          description: String.t() | nil,
           expects: %{
             body:
               func_matcher()
@@ -141,6 +143,7 @@ defmodule HTTPEx.Backend.Mock.Expectation do
 
   ## Options
 
+  - description
   - method
   - endpoint
   - body
@@ -237,6 +240,7 @@ defmodule HTTPEx.Backend.Mock.Expectation do
     end
 
     %Expectation{
+      description: opts[:description],
       global: global,
       min_calls: min_calls,
       max_calls: max_calls,
@@ -261,6 +265,8 @@ defmodule HTTPEx.Backend.Mock.Expectation do
   def summary(%Expectation{} = expectation) do
     """
       #{Shared.header("HTTP expectation ##{expectation.index}")}
+
+      #{Shared.attr("Description")} #{Shared.value(expectation.description)}
 
       #{Shared.attr("Calls")} ##{expectation.calls}
       #{Shared.attr("Min calls")} #{Shared.value(expectation.min_calls)}
@@ -446,6 +452,11 @@ defmodule HTTPEx.Backend.Mock.Expectation do
   Match keyword lists with String.t() values on both sides:
 
       iex> Expectation.validate_matcher_value(:headers, [{"Content-Type", "application/json"}])
+      :ok
+
+  Or with a Regex.t():
+
+      iex> Expectation.validate_matcher_value(:headers, [{"Content-Type", ~r/application/}])
       :ok
 
   Invalid lists, tuples. types are not valid:
@@ -811,7 +822,7 @@ defmodule HTTPEx.Backend.Mock.Expectation do
   ## Examples
 
       iex> Expectation.to_response(
-      ...>   %{status: 200, body: "OK <:carrier_code:>", headers: [{"Secret", "XYZ"}], replace_body_vars: true},
+      ...>   %{status: 200, body: "OK {{carrier_code}}", headers: [{"Secret", "XYZ"}], replace_body_vars: true},
       ...>   %{"carrier_code" => "UPS"}
       ...> )
       {:ok, %HTTPoison.Response{status_code: 200, body: "OK UPS", headers: [{"Secret", "XYZ"}]}}
@@ -821,7 +832,7 @@ defmodule HTTPEx.Backend.Mock.Expectation do
 
       iex> Expectation.to_response(
       ...>   %Request{url: "http://www.example.com", method: :get},
-      ...>   %Expectation{response: fn _r -> %{status: 200, body: "OK <:account:>", replace_body_vars: true} end},
+      ...>   %Expectation{response: fn _r -> %{status: 200, body: "OK XYZ", replace_body_vars: true} end},
       ...>   %{"account" => "XYZ"}
       ...> )
       {:ok, %HTTPoison.Response{status_code: 200, body: "OK XYZ", headers: []}}
@@ -832,7 +843,7 @@ defmodule HTTPEx.Backend.Mock.Expectation do
     body =
       if response[:replace_body_vars] do
         Enum.reduce(vars, body, fn {key, value}, body ->
-          String.replace(body, "<:#{key}:>", value)
+          String.replace(body, "{{#{key}}}", value)
         end)
       else
         body
@@ -907,8 +918,11 @@ defmodule HTTPEx.Backend.Mock.Expectation do
        when is_list(matcher) and is_list(value_to_match) do
     Enum.all?(matcher, fn {key, value} ->
       case List.keyfind(value_to_match, key, 0) do
-        {_key, actual_value} -> actual_value == value
-        _ -> false
+        {_key, actual_value} ->
+          (match?(%Regex{}, value) && Regex.match?(value, actual_value)) || actual_value == value
+
+        _ ->
+          false
       end
     end)
   end
@@ -962,7 +976,7 @@ defmodule HTTPEx.Backend.Mock.Expectation do
   defp valid_value_of_type?([_head | _tail] = value, :keyword_list) when is_list(value) do
     Enum.all?(value, fn item ->
       case item do
-        {key, value} when is_binary(key) and is_binary(value) -> true
+        {key, value} when is_binary(key) and (is_binary(value) or is_struct(value, Regex)) -> true
         _ -> false
       end
     end)
