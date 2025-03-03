@@ -130,6 +130,9 @@ defmodule HTTPEx.Backend.Mock do
     - `xml`
     - `form`
 
+  * `description` -
+    Described the expectation.
+
   * `expect_body` -
     The request body that is expected to be used.
 
