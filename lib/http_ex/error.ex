@@ -6,6 +6,7 @@ defmodule HTTPEx.Error do
   alias HTTPEx.Shared
 
   defstruct body: nil,
+            client: nil,
             headers: nil,
             parsed_body: nil,
             reason: nil,
@@ -14,6 +15,7 @@ defmodule HTTPEx.Error do
 
   @type t :: %__MODULE__{
           body: nil | String.t(),
+          client: atom(),
           headers: nil | HTTPoison.headers(),
           parsed_body: nil | map() | list(),
           reason: atom(),
@@ -27,6 +29,7 @@ defmodule HTTPEx.Error do
     """
     #{Shared.header("HTTP error")}
 
+    #{Shared.attr("Client")} #{Shared.value(error.client)}
     #{Shared.attr("Reason")} #{Shared.value(error.reason)}
     #{Shared.attr("Status")} #{Shared.value(error.status)}
     #{Shared.attr("Retries")} #{Shared.value(error.retries)}

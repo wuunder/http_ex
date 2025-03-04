@@ -57,8 +57,14 @@ defmodule HTTPEx.Request do
       request.options
       |> Keyword.put_new(:transport_retry_timeout, @default_transport_retry_timeout)
       |> Keyword.put_new(:transport_max_retries, @default_transport_max_retries)
-      |> Keyword.put_new(:retry_error_codes, @default_retry_error_codes)
-      |> Keyword.put_new(:retry_status_codes, @default_retry_status_codes)
+      |> Keyword.put_new(
+        :retry_error_codes,
+        Shared.config(:default_retry_error_codes, @default_retry_error_codes)
+      )
+      |> Keyword.put_new(
+        :retry_status_codes,
+        Shared.config(:default_retry_status_codes, @default_retry_status_codes)
+      )
       |> Keyword.put_new(:pool, Shared.config(:default_pool))
 
     %{

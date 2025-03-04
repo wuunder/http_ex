@@ -19,7 +19,7 @@ defmodule HTTPEx do
   alias HTTPEx.Response
   alias HTTPEx.Shared
 
-  use HTTPEx.Parsing
+  import HTTPEx.Clients, only: [def_to_response: 0]
 
   @backend Application.compile_env(:http_ex, :backend, HTTPEx.Backend.Default)
   @retry_wait 100
@@ -30,16 +30,17 @@ defmodule HTTPEx do
   ## Examples
 
       iex> HTTPEx.get("http://www.example.com", backend: MockBackend)
-      {:ok, %HTTPEx.Response{body: "OK!", retries: 1, status: 200, parsed_body: nil, headers: []}}
+      {:ok, %HTTPEx.Response{body: "OK!", client: :httpoison, retries: 1, status: 200, parsed_body: nil, headers: []}}
 
       iex> HTTPEx.get("http://www.example.com", backend: MockBackend, client: :finch)
-      {:ok, %HTTPEx.Response{body: "OK!", retries: 1, status: 200, parsed_body: nil, headers: []}}
+      {:ok, %HTTPEx.Response{body: "OK!", client: :httpoison, retries: 1, status: 200, parsed_body: nil, headers: []}}
 
       iex> HTTPEx.get("http://www.example.com/json", headers: [{"Content-Type", "application/json"}], backend: MockBackend)
       {
         :ok,
         %HTTPEx.Response{
           body: "{\\"payload\\":{\\"items\\":[1,2,3]}}",
+          client: :httpoison,
           headers: [],
           parsed_body: %{"payload" => %{"items" => [1, 2, 3]}},
           retries: 1,
@@ -52,6 +53,7 @@ defmodule HTTPEx do
         :error,
         %HTTPEx.Error{
           body: "{\\"errors\\":[{\\"code\\":\\"invalid_payload\\"}]}",
+          client: :httpoison,
           headers: [],
           parsed_body: %{"errors" => [%{"code" => "invalid_payload"}]},
           retries: 1,
@@ -78,7 +80,7 @@ defmodule HTTPEx do
   ## Examples
 
       iex> HTTPEx.post("http://www.example.com", JSON.encode!(%{"data" => true}), backend: MockBackend)
-      {:ok, %HTTPEx.Response{body: "OK!", retries: 1, status: 200, parsed_body: nil, headers: []}}
+      {:ok, %HTTPEx.Response{body: "OK!", client: :httpoison, retries: 1, status: 200, parsed_body: nil, headers: []}}
 
   """
   @spec post(String.t(), String.t(), Keyword.t()) :: {:ok, Response.t()} | {:error, Error.t()}
@@ -105,7 +107,7 @@ defmodule HTTPEx do
       ...>   options: [backend: MockBackend],
       ...> }
       ...> HTTPEx.request(request)
-      {:ok, %HTTPEx.Response{body: "OK!", retries: 1, status: 200, parsed_body: nil, headers: []}}
+      {:ok, %HTTPEx.Response{body: "OK!", client: :httpoison, retries: 1, status: 200, parsed_body: nil, headers: []}}
 
       iex> request = %HTTPEx.Request{
       ...>   method: :post,
@@ -119,6 +121,7 @@ defmodule HTTPEx do
         :ok,
         %HTTPEx.Response{
           body: "{\\"payload\\":{\\"label\\":\\"ABCD\\"}}",
+          client: :httpoison,
           headers: [],
           parsed_body: %{"payload" => %{"label" => "ABCD"}},
           retries: 1,
@@ -139,6 +142,8 @@ defmodule HTTPEx do
       |> Logging.trace()
     end)
   end
+
+  def_to_response()
 
   defp retry?(_request, {:ok, %Response{}}), do: false
 

@@ -5,7 +5,7 @@ defmodule HTTPEx.Backend.Mock.Expectation do
   """
   @behaviour HTTPEx.Traceable
 
-  use HTTPEx.Backend.Mock.Parsing
+  import HTTPEx.Clients, only: [def_to_client_response: 0]
 
   alias __MODULE__
   alias HTTPEx.Request
@@ -837,6 +837,8 @@ defmodule HTTPEx.Backend.Mock.Expectation do
 
   def to_response(%Request{} = request, %Expectation{response: response}, %{} = vars),
     do: parse_response(response, vars, request.client)
+
+  def_to_client_response()
 
   defp parse_response(%{status: status, body: body} = response, %{} = vars, client)
        when is_integer(status) and is_binary(body) do
