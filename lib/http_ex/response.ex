@@ -23,6 +23,7 @@ defmodule HTTPEx.Response do
     """
     #{Shared.header("HTTP response")}
 
+    #{Shared.attr("Client")} #{Shared.value(response.client)}
     #{Shared.attr("Status")} #{Shared.value(response.status)}
     #{Shared.attr("Retries")} #{Shared.value(response.retries)}
     #{Shared.attr("Headers")}

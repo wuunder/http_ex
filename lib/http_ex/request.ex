@@ -137,6 +137,7 @@ defmodule HTTPEx.Request do
     """
     #{Shared.header("HTTP request")}
 
+    #{Shared.attr("Client")} #{Shared.value(request.client)}
     #{Shared.attr("Retry")} ##{Shared.value(request.retries)}
     #{Shared.attr("URL")} #{Shared.value(request.url)}
     #{Shared.attr("Method")} #{Shared.value(request.method)}
