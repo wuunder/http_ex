@@ -83,8 +83,16 @@ defmodule HTTPEx do
       {:ok, %HTTPEx.Response{body: "OK!", client: :httpoison, retries: 1, status: 200, parsed_body: nil, headers: []}}
 
   """
-  @spec post(String.t(), String.t(), Keyword.t()) :: {:ok, Response.t()} | {:error, Error.t()}
-  def post(url, body, options \\ []) when is_binary(url) and is_binary(body) and is_list(options),
+  @spec post(
+          String.t(),
+          iodata()
+          | {:stream, Enumerable.t()}
+          | {:multipart, Enumerable.t()}
+          | {:form, Enumerable.t()}
+          | nil,
+          Keyword.t()
+        ) :: {:ok, Response.t()} | {:error, Error.t()}
+  def post(url, body, options \\ []) when is_binary(url) and is_list(options),
     do:
       request(%Request{
         client: Keyword.get(options, :client),
