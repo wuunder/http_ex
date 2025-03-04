@@ -92,16 +92,20 @@ defmodule HTTPEx do
           | nil,
           Keyword.t()
         ) :: {:ok, Response.t()} | {:error, Error.t()}
-  def post(url, body, options \\ []) when is_binary(url) and is_list(options),
-    do:
-      request(%Request{
-        client: Keyword.get(options, :client),
-        body: body,
-        headers: Keyword.get(options, :headers, []),
-        method: :post,
-        url: url,
-        options: options |> Keyword.delete(:headers) |> Keyword.delete(:client)
-      })
+
+  def post(url, body, options \\ [])
+      when is_binary(url) and
+             (is_nil(body) or is_binary(body) or (is_tuple(body) and tuple_size(body) == 2)) and
+             is_list(options),
+      do:
+        request(%Request{
+          client: Keyword.get(options, :client),
+          body: body,
+          headers: Keyword.get(options, :headers, []),
+          method: :post,
+          url: url,
+          options: request_options(options)
+        })
 
   @doc """
   Executes a Request
@@ -140,6 +144,9 @@ defmodule HTTPEx do
   """
   @spec request(Request.t()) :: {:ok, Response.t()} | {:error, Error.t()}
   def request(%Request{} = request) do
+    # Make sure the request body contains correct data
+    validate_body!(request)
+
     # Wraps the entire HTTP call into one single `HTTP` span
     # Each retry will spawn with a `[method]` underneath it.
     Logging.span("HTTP", fn ->
@@ -214,4 +221,14 @@ defmodule HTTPEx do
   end
 
   defp retry_enabled?, do: Shared.config(:retry, true) == true
+
+  defp request_options(options),
+    do: options |> Keyword.delete(:headers) |> Keyword.delete(:client)
+
+  defp validate_body!(%{body: {:stream, _}}), do: :ok
+  defp validate_body!(%{body: {:multipart, _}}), do: :ok
+  defp validate_body!(%{body: {:form, _}}), do: :ok
+  defp validate_body!(%{body: body}) when is_binary(body), do: :ok
+  defp validate_body!(%{body: nil}), do: :ok
+  defp validate_body!(_), do: raise(ArgumentError, "Incorrect body given")
 end
