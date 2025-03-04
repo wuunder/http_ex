@@ -56,7 +56,10 @@ defmodule HTTPEx.Request do
     merged_options =
       request.options
       |> Keyword.put_new(:transport_retry_timeout, @default_transport_retry_timeout)
-      |> Keyword.put_new(:transport_max_retries, @default_transport_max_retries)
+      |> Keyword.put_new(
+        :transport_max_retries,
+        Shared.config(:default_transport_max_retries, @default_transport_max_retries)
+      )
       |> Keyword.put_new(
         :retry_error_codes,
         Shared.config(:default_retry_error_codes, @default_retry_error_codes)

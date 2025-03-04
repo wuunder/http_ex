@@ -169,8 +169,11 @@ defmodule HTTPExTest do
                 }}
     end
 
-    test "error with 3 retries, because of timeout" do
-      assert HTTPEx.get("http://www.example.com/timeout", backend: MockBackend) ==
+    test "error with 2 retries, because of timeout and overriden settings" do
+      assert HTTPEx.get("http://www.example.com/timeout",
+               backend: MockBackend,
+               transport_max_retries: 2
+             ) ==
                {:error,
                 %Error{
                   body: nil,
@@ -178,7 +181,24 @@ defmodule HTTPExTest do
                   headers: nil,
                   parsed_body: nil,
                   reason: :timeout,
-                  retries: 3,
+                  retries: 2,
+                  status: nil
+                }}
+    end
+
+    test "error with no retries, because max is set to 0" do
+      assert HTTPEx.get("http://www.example.com/timeout",
+               backend: MockBackend,
+               transport_max_retries: 0
+             ) ==
+               {:error,
+                %Error{
+                  body: nil,
+                  client: :httpoison,
+                  headers: nil,
+                  parsed_body: nil,
+                  reason: :timeout,
+                  retries: 1,
                   status: nil
                 }}
     end
