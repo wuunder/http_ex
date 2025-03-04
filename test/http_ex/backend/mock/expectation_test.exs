@@ -241,6 +241,102 @@ defmodule HTTPEx.Backend.Mock.ExpectationTest do
     end
   end
 
+  describe "to_response #httpoison" do
+    test "map" do
+      request = %Request{client: :httpoison, method: :get, url: "http://www.example.com"}
+
+      expectation = %Expectation{
+        response: %{status: 202, body: "OK {{var}}", replace_body_vars: true}
+      }
+
+      assert Expectation.to_response(request, expectation, %{"var" => "test"}) ==
+               {:ok, %HTTPoison.Response{body: "OK test", status_code: 202}}
+    end
+
+    test "func map" do
+      request = %Request{client: :httpoison, method: :get, url: "http://www.example.com"}
+
+      expectation = %Expectation{
+        response: fn _ -> %{status: 202, body: "OK {{var}}", replace_body_vars: true} end
+      }
+
+      assert Expectation.to_response(request, expectation, %{"var" => "test"}) ==
+               {:ok, %HTTPoison.Response{body: "OK test", status_code: 202}}
+    end
+
+    test "econnrefused" do
+      request = %Request{client: :httpoison, method: :get, url: "http://www.example.com"}
+      expectation = %Expectation{response: {:error, :econnrefused}}
+
+      assert Expectation.to_response(request, expectation, %{}) ==
+               {:error, %HTTPoison.Error{reason: :econnrefused}}
+    end
+
+    test "func error" do
+      request = %Request{client: :httpoison, method: :get, url: "http://www.example.com"}
+      expectation = %Expectation{response: fn _ -> {:error, :econnrefused} end}
+
+      assert Expectation.to_response(request, expectation, %{}) ==
+               {:error, %HTTPoison.Error{reason: :econnrefused}}
+    end
+
+    test "timeout" do
+      request = %Request{client: :httpoison, method: :get, url: "http://www.example.com"}
+      expectation = %Expectation{response: {:error, :timeout}}
+
+      assert Expectation.to_response(request, expectation, %{}) ==
+               {:error, %HTTPoison.Error{reason: :timeout}}
+    end
+  end
+
+  describe "to_response #finch" do
+    test "map" do
+      request = %Request{client: :finch, method: :get, url: "http://www.example.com"}
+
+      expectation = %Expectation{
+        response: %{status: 202, body: "OK {{var}}", replace_body_vars: true}
+      }
+
+      assert Expectation.to_response(request, expectation, %{"var" => "test"}) ==
+               {:ok, %Finch.Response{body: "OK test", status: 202}}
+    end
+
+    test "func map" do
+      request = %Request{client: :finch, method: :get, url: "http://www.example.com"}
+
+      expectation = %Expectation{
+        response: fn _ -> %{status: 202, body: "OK {{var}}", replace_body_vars: true} end
+      }
+
+      assert Expectation.to_response(request, expectation, %{"var" => "test"}) ==
+               {:ok, %Finch.Response{body: "OK test", status: 202}}
+    end
+
+    test "econnrefused" do
+      request = %Request{client: :finch, method: :get, url: "http://www.example.com"}
+      expectation = %Expectation{response: {:error, :econnrefused}}
+
+      assert Expectation.to_response(request, expectation, %{}) ==
+               {:error, %Mint.TransportError{reason: :econnrefused}}
+    end
+
+    test "func error" do
+      request = %Request{client: :finch, method: :get, url: "http://www.example.com"}
+      expectation = %Expectation{response: fn _ -> {:error, :econnrefused} end}
+
+      assert Expectation.to_response(request, expectation, %{}) ==
+               {:error, %Mint.TransportError{reason: :econnrefused}}
+    end
+
+    test "timeout" do
+      request = %Request{client: :finch, method: :get, url: "http://www.example.com"}
+      expectation = %Expectation{response: {:error, :timeout}}
+
+      assert Expectation.to_response(request, expectation, %{}) ==
+               {:error, %Mint.TransportError{reason: :timeout}}
+    end
+  end
+
   defp get_with_match(field, match) do
     expectation = %Expectation{}
 
