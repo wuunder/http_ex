@@ -702,7 +702,7 @@ defmodule HTTPEx.Backend.Mock.Expectation do
 
   """
   @spec find_matching_expectation(list(Expectation.t()), Request.t()) ::
-          {:ok, Expectation.t(), map()} | {:error, atom()}
+          {:ok, Expectation.t(), map()} | {:error, atom()} | {:error, atom(), Expectation.t()}
   def find_matching_expectation(expectations, %Request{} = request)
       when is_list(expectations) do
     matching_expectations =

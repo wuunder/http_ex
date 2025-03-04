@@ -1,5 +1,5 @@
 [
   {"lib/http_ex.ex", :no_return},
-  ~r/mock*.ex/,
+  {"lib/http_ex/backend/mock.ex", :unmatched_return},
   ~r/logging*.ex/
 ]
