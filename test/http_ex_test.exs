@@ -367,4 +367,134 @@ defmodule HTTPExTest do
 
     {:ok, %HTTPEx.Response{body: "OK!", retries: 1, status: 200, parsed_body: nil, headers: []}}
   end
+
+  describe "to_response #http_poison" do
+    test "ok" do
+      assert HTTPEx.to_response({:ok, %HTTPoison.Response{body: "OK test", status_code: 202}}, 0) ==
+               {:ok,
+                %HTTPEx.Response{
+                  body: "OK test",
+                  client: :httpoison,
+                  retries: 0,
+                  status: 202,
+                  parsed_body: nil,
+                  headers: []
+                }}
+    end
+
+    test "ok, parsed" do
+      assert HTTPEx.to_response(
+               {:ok,
+                %HTTPoison.Response{
+                  body: JSON.encode!(%{"value" => true, "other_value" => 1337}),
+                  status_code: 202
+                }},
+               0
+             ) ==
+               {:ok,
+                %HTTPEx.Response{
+                  body: "{\"other_value\":1337,\"value\":true}",
+                  client: :httpoison,
+                  headers: [],
+                  parsed_body: %{"other_value" => 1337, "value" => true},
+                  retries: 0,
+                  status: 202
+                }}
+    end
+
+    test "error because of status_code" do
+      assert HTTPEx.to_response(
+               {:ok, %HTTPoison.Response{body: "Not found", status_code: 404}},
+               0
+             ) ==
+               {:error,
+                %HTTPEx.Error{
+                  body: "Not found",
+                  client: :httpoison,
+                  headers: [],
+                  parsed_body: nil,
+                  retries: 0,
+                  status: 404,
+                  reason: :not_found
+                }}
+    end
+
+    test "error because of generic error" do
+      assert HTTPEx.to_response(
+               {:error, %HTTPoison.Error{reason: :timeout}},
+               0
+             ) ==
+               {:error,
+                %HTTPEx.Error{
+                  client: :httpoison,
+                  reason: :timeout,
+                  retries: 0
+                }}
+    end
+  end
+
+  describe "to_response #finch" do
+    test "ok" do
+      assert HTTPEx.to_response({:ok, %Finch.Response{body: "OK test", status: 202}}, 0) ==
+               {:ok,
+                %HTTPEx.Response{
+                  body: "OK test",
+                  client: :finch,
+                  retries: 0,
+                  status: 202,
+                  parsed_body: nil,
+                  headers: []
+                }}
+    end
+
+    test "ok, parsed" do
+      assert HTTPEx.to_response(
+               {:ok,
+                %Finch.Response{
+                  body: JSON.encode!(%{"value" => true, "other_value" => 1337}),
+                  status: 202
+                }},
+               0
+             ) ==
+               {:ok,
+                %HTTPEx.Response{
+                  body: "{\"other_value\":1337,\"value\":true}",
+                  client: :finch,
+                  headers: [],
+                  parsed_body: %{"other_value" => 1337, "value" => true},
+                  retries: 0,
+                  status: 202
+                }}
+    end
+
+    test "error because of status_code" do
+      assert HTTPEx.to_response(
+               {:ok, %Finch.Response{body: "Not found", status: 404}},
+               0
+             ) ==
+               {:error,
+                %HTTPEx.Error{
+                  body: "Not found",
+                  client: :finch,
+                  headers: [],
+                  parsed_body: nil,
+                  retries: 0,
+                  status: 404,
+                  reason: :not_found
+                }}
+    end
+
+    test "error because of generic error" do
+      assert HTTPEx.to_response(
+               {:error, %Mint.TransportError{reason: :timeout}},
+               0
+             ) ==
+               {:error,
+                %HTTPEx.Error{
+                  client: :finch,
+                  reason: :timeout,
+                  retries: 0
+                }}
+    end
+  end
 end
