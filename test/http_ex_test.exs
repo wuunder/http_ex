@@ -90,6 +90,7 @@ defmodule HTTPExTest do
                {:ok,
                 %HTTPEx.Response{
                   body: "OK!",
+                  client: :httpoison,
                   retries: 1,
                   status: 200,
                   parsed_body: nil,
@@ -102,6 +103,7 @@ defmodule HTTPExTest do
                {:ok,
                 %HTTPEx.Response{
                   body: "OK!",
+                  client: :httpoison,
                   retries: 1,
                   status: 200,
                   parsed_body: nil,
@@ -112,6 +114,7 @@ defmodule HTTPExTest do
                {:ok,
                 %HTTPEx.Response{
                   body: "OK!",
+                  client: :httpoison,
                   retries: 1,
                   status: 200,
                   parsed_body: nil,
@@ -127,6 +130,7 @@ defmodule HTTPExTest do
                {:ok,
                 %HTTPEx.Response{
                   body: ~s({"payload":{"items":[1,2,3]}}),
+                  client: :httpoison,
                   headers: [],
                   parsed_body: %{"payload" => %{"items" => [1, 2, 3]}},
                   retries: 1,
@@ -139,6 +143,7 @@ defmodule HTTPExTest do
                {:error,
                 %HTTPEx.Error{
                   body: ~s({"errors":[{"code":"invalid_payload"}]}),
+                  client: :httpoison,
                   headers: [],
                   parsed_body: %{"errors" => [%{"code" => "invalid_payload"}]},
                   reason: :unprocessable_entity,
@@ -155,6 +160,7 @@ defmodule HTTPExTest do
                {:error,
                 %HTTPEx.Error{
                   body: ~s({"errors":[{"code":"invalid_payload"}]}),
+                  client: :httpoison,
                   headers: [],
                   parsed_body: %{"errors" => [%{"code" => "invalid_payload"}]},
                   reason: :unprocessable_entity,
@@ -168,6 +174,7 @@ defmodule HTTPExTest do
                {:error,
                 %Error{
                   body: nil,
+                  client: :httpoison,
                   headers: nil,
                   parsed_body: nil,
                   reason: :timeout,
@@ -184,6 +191,7 @@ defmodule HTTPExTest do
                {:error,
                 %Error{
                   body: nil,
+                  client: :httpoison,
                   headers: nil,
                   parsed_body: nil,
                   reason: :timeout,
@@ -201,6 +209,7 @@ defmodule HTTPExTest do
                {:ok,
                 %HTTPEx.Response{
                   body: "OK!",
+                  client: :httpoison,
                   retries: 1,
                   status: 200,
                   parsed_body: nil,
@@ -216,6 +225,7 @@ defmodule HTTPExTest do
                {:ok,
                 %HTTPEx.Response{
                   body: "OK!",
+                  client: :httpoison,
                   retries: 1,
                   status: 200,
                   parsed_body: nil,
@@ -229,6 +239,7 @@ defmodule HTTPExTest do
                {:ok,
                 %HTTPEx.Response{
                   body: "OK!",
+                  client: :httpoison,
                   retries: 1,
                   status: 200,
                   parsed_body: nil,
@@ -244,6 +255,7 @@ defmodule HTTPExTest do
                {:ok,
                 %HTTPEx.Response{
                   body: ~s({"payload":{"label":"ABCD"}}),
+                  client: :httpoison,
                   headers: [],
                   parsed_body: %{"payload" => %{"label" => "ABCD"}},
                   retries: 1,
@@ -258,6 +270,7 @@ defmodule HTTPExTest do
                {:error,
                 %HTTPEx.Error{
                   body: ~s({"errors":[{"code":"invalid_payload"}]}),
+                  client: :httpoison,
                   headers: [],
                   parsed_body: %{"errors" => [%{"code" => "invalid_payload"}]},
                   reason: :unprocessable_entity,
@@ -274,6 +287,7 @@ defmodule HTTPExTest do
                {:error,
                 %HTTPEx.Error{
                   body: ~s({"errors":[{"code":"invalid_payload"}]}),
+                  client: :httpoison,
                   headers: [],
                   parsed_body: %{"errors" => [%{"code" => "invalid_payload"}]},
                   reason: :unprocessable_entity,
@@ -289,6 +303,7 @@ defmodule HTTPExTest do
                {:error,
                 %Error{
                   body: nil,
+                  client: :httpoison,
                   headers: nil,
                   parsed_body: nil,
                   reason: :timeout,
@@ -305,6 +320,7 @@ defmodule HTTPExTest do
                {:error,
                 %Error{
                   body: nil,
+                  client: :httpoison,
                   headers: nil,
                   parsed_body: nil,
                   reason: :timeout,
@@ -325,6 +341,7 @@ defmodule HTTPExTest do
              {:ok,
               %HTTPEx.Response{
                 body: "OK!",
+                client: :httpoison,
                 retries: 1,
                 status: 200,
                 parsed_body: nil,
@@ -341,6 +358,7 @@ defmodule HTTPExTest do
                     {:ok,
                      %HTTPEx.Response{
                        body: "OK!",
+                       client: :httpoison,
                        retries: 1,
                        status: 200,
                        parsed_body: nil,

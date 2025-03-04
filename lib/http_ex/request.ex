@@ -12,7 +12,7 @@ defmodule HTTPEx.Request do
 
   @enforce_keys [:method, :url]
   defstruct body: "",
-            client: :httpoison,
+            client: nil,
             headers: [],
             method: nil,
             options: [],
@@ -22,8 +22,8 @@ defmodule HTTPEx.Request do
 
   @type method() :: :get | :post | :head | :patch | :delete | :options | :put | String.t()
   @type url() :: String.t() | URI.t()
-  @type headers() :: HTTPoison.headers()
-  @type options() :: HTTPoison.options()
+  @type headers() :: list()
+  @type options() :: Keyword.t()
 
   @type t() :: %__MODULE__{
           body:
@@ -48,7 +48,7 @@ defmodule HTTPEx.Request do
 
     iex> request = Request.init(%Request{url: "http://www.example.com", method: :get})
     ...> request.options
-    [retry_status_codes: [500, 502, 503, 504], retry_error_codes: [:closed, :timeout], transport_max_retries: 3, transport_retry_timeout: 2000]
+    [pool: HTTPEx.FinchTestPool, retry_status_codes: [500, 502, 503, 504], retry_error_codes: [:closed, :timeout], transport_max_retries: 3, transport_retry_timeout: 2000]
 
   """
   @spec init(Request.t()) :: Request.t()
@@ -57,12 +57,20 @@ defmodule HTTPEx.Request do
       request.options
       |> Keyword.put_new(:transport_retry_timeout, @default_transport_retry_timeout)
       |> Keyword.put_new(:transport_max_retries, @default_transport_max_retries)
-      |> Keyword.put_new(:retry_error_codes, @default_retry_error_codes)
-      |> Keyword.put_new(:retry_status_codes, @default_retry_status_codes)
+      |> Keyword.put_new(
+        :retry_error_codes,
+        Shared.config(:default_retry_error_codes, @default_retry_error_codes)
+      )
+      |> Keyword.put_new(
+        :retry_status_codes,
+        Shared.config(:default_retry_status_codes, @default_retry_status_codes)
+      )
+      |> Keyword.put_new(:pool, Shared.config(:default_pool))
 
     %{
       request
-      | headers: request.headers || [],
+      | client: request.client || Shared.config(:default_client),
+        headers: request.headers || [],
         options: merged_options,
         start_time: :erlang.monotonic_time(:millisecond),
         retries: 1

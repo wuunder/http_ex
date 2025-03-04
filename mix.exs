@@ -31,7 +31,8 @@ defmodule HttpEx.MixProject do
       {:dialyxir, "~> 1.3", optional: true, only: [:dev], runtime: false},
       {:excoveralls, "~> 0.18.0", optional: true, only: :test},
       {:ex_doc, "~> 0.31", optional: true, only: :dev, runtime: false},
-      {:httpoison, "~> 2.0"},
+      {:httpoison, "~> 2.0", optional: true},
+      {:finch, "~> 0.18", optional: true},
       {:styler, "~> 1.0", optional: true, only: [:dev, :test]},
       {:nimble_ownership, "~> 1.0"},
       {:tracing, "~> 0.2.0"}

@@ -5,7 +5,9 @@ defmodule HTTPEx.Backend.Mock.Expectation do
   """
   @behaviour HTTPEx.Traceable
 
-  alias HTTPEx.Backend.Mock.Expectation
+  import HTTPEx.Clients, only: [def_to_client_response: 0]
+
+  alias __MODULE__
   alias HTTPEx.Request
   alias HTTPEx.Shared
 
@@ -74,7 +76,7 @@ defmodule HTTPEx.Backend.Mock.Expectation do
   @type response_map() :: %{
           :status => Plug.Conn.status(),
           :body => String.t(),
-          optional(:headers) => HTTPoison.headers(),
+          optional(:headers) => list(),
           optional(:replace_body_vars) => boolean()
         }
 
@@ -700,7 +702,7 @@ defmodule HTTPEx.Backend.Mock.Expectation do
 
   """
   @spec find_matching_expectation(list(Expectation.t()), Request.t()) ::
-          {:ok, Expectation.t(), map()} | {:error, atom()}
+          {:ok, Expectation.t(), map()} | {:error, atom()} | {:error, atom(), Expectation.t()}
   def find_matching_expectation(expectations, %Request{} = request)
       when is_list(expectations) do
     matching_expectations =
@@ -813,33 +815,33 @@ defmodule HTTPEx.Backend.Mock.Expectation do
   end
 
   @doc """
-  Generates a fake response from a map, an error tuple or a HTTPoison struct.
+  Generates a fake response from a map, an error tuple or a http driver struct.
   Replaces any vars if a response map has the option `replace_body_vars` set to `true`.
 
   The response can also be a function. This function receives a Request.t() and must return
   a valid response().
-
-  ## Examples
-
-      iex> Expectation.to_response(
-      ...>   %{status: 200, body: "OK {{carrier_code}}", headers: [{"Secret", "XYZ"}], replace_body_vars: true},
-      ...>   %{"carrier_code" => "UPS"}
-      ...> )
-      {:ok, %HTTPoison.Response{status_code: 200, body: "OK UPS", headers: [{"Secret", "XYZ"}]}}
-
-      iex> Expectation.to_response({:error, :timeout}, %{})
-      {:error, %HTTPoison.Error{reason: :timeout}}
-
-      iex> Expectation.to_response(
-      ...>   %Request{url: "http://www.example.com", method: :get},
-      ...>   %Expectation{response: fn _r -> %{status: 200, body: "OK XYZ", replace_body_vars: true} end},
-      ...>   %{"account" => "XYZ"}
-      ...> )
-      {:ok, %HTTPoison.Response{status_code: 200, body: "OK XYZ", headers: []}}
-
   """
-  def to_response(%{status: status, body: body} = response, %{} = vars)
-      when is_integer(status) and is_binary(body) do
+  def to_response(%Request{} = request, %Expectation{response: fun}, %{} = vars)
+      when is_function(fun, 1) do
+    request
+    |> fun.()
+    |> parse_response(vars, request.client)
+  end
+
+  def to_response(%Request{} = request, %Expectation{response: fun}, %{} = vars)
+      when is_function(fun, 2) do
+    request
+    |> fun.(vars)
+    |> parse_response(vars, request.client)
+  end
+
+  def to_response(%Request{} = request, %Expectation{response: response}, %{} = vars),
+    do: parse_response(response, vars, request.client)
+
+  def_to_client_response()
+
+  defp parse_response(%{status: status, body: body} = response, %{} = vars, client)
+       when is_integer(status) and is_binary(body) do
     body =
       if response[:replace_body_vars] do
         Enum.reduce(vars, body, fn {key, value}, body ->
@@ -849,27 +851,15 @@ defmodule HTTPEx.Backend.Mock.Expectation do
         body
       end
 
-    {:ok, %HTTPoison.Response{status_code: status, body: body, headers: response[:headers] || []}}
+    to_client_response(client, :ok, %{
+      status_code: status,
+      body: body,
+      headers: response[:headers] || []
+    })
   end
 
-  def to_response({:error, reason}, %{}), do: {:error, %HTTPoison.Error{reason: reason}}
-
-  def to_response(%Request{} = request, %Expectation{response: fun}, %{} = vars)
-      when is_function(fun, 1) do
-    request
-    |> fun.()
-    |> to_response(vars)
-  end
-
-  def to_response(%Request{} = request, %Expectation{response: fun}, %{} = vars)
-      when is_function(fun, 2) do
-    request
-    |> fun.(vars)
-    |> to_response(vars)
-  end
-
-  def to_response(%Request{}, %Expectation{response: response}, %{} = vars),
-    do: to_response(response, vars)
+  defp parse_response({:error, reason}, %{}, client),
+    do: to_client_response(client, :error, reason)
 
   defp get_request_value(%Request{} = request, _field, :func), do: request
 
