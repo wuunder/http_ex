@@ -234,13 +234,13 @@ defmodule HTTPEx.Backend.Mock.Expectation do
 
     response = Keyword.get(opts, :response)
 
-    if type == :reject && response do
-      raise ArgumentError, "Rejected calls cannot have a response"
-    end
+    if type == :reject && response,
+      do: raise(ArgumentError, "Rejected calls cannot have a response")
 
-    if type != :reject && !response do
-      raise ArgumentError, "A response is required for a stub or assertion"
-    end
+    if type != :reject && !response,
+      do: raise(ArgumentError, "A response is required for a stub or assertion")
+
+    if type != :reject, do: validate_response_option!(response)
 
     %Expectation{
       description: opts[:description],
@@ -1006,4 +1006,34 @@ defmodule HTTPEx.Backend.Mock.Expectation do
   end
 
   defp valid_value_of_type?(_value, :keyword_list), do: false
+
+  defp validate_response_option!(%{} = response) do
+    if not Map.has_key?(response, :body), do: raise(ArgumentError, "Response requires a body")
+
+    if not Map.has_key?(response, :status),
+      do: raise(ArgumentError, "Response requires a status code")
+
+    if not is_binary(response[:body]),
+      do: raise(ArgumentError, "Response body should contain a binary")
+
+    if not is_binary(response[:body]),
+      do: raise(ArgumentError, "Response body should contain a binary")
+
+    if not is_integer(response[:status]),
+      do: raise(ArgumentError, "Response status should be an integer")
+
+    if Map.has_key?(response, :headers) and not is_list(response[:headers]),
+      do: raise(ArgumentError, "Response headers should be a list with tuples")
+
+    :ok
+  end
+
+  defp validate_response_option!(%{status: _, body: _}), do: :ok
+  defp validate_response_option!(response) when is_function(response, 1), do: :ok
+
+  defp validate_response_option!({:error, reason}) when is_atom(reason) and not is_nil(reason),
+    do: :ok
+
+  defp validate_response_option!(_),
+    do: raise(ArgumentError, "Invalid response given to expectation")
 end
