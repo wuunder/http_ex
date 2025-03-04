@@ -7,6 +7,7 @@ defmodule HTTPEx.Backend.Mock.Expectation do
 
   import HTTPEx.Clients, only: [def_to_client_response: 0]
 
+  alias HTTPEx.Backend.Mock.JSON
   alias HTTPEx.Backend.Mock.XML
   alias __MODULE__
   alias HTTPEx.Request
@@ -919,7 +920,7 @@ defmodule HTTPEx.Backend.Mock.Expectation do
 
   defp match_value(:string_with_format, {matcher, :json}, value_to_match)
        when is_binary(matcher) and is_binary(value_to_match),
-       do: JSON.decode!(matcher) == JSON.decode!(value_to_match)
+       do: JSON.normalize(matcher) == JSON.normalize(value_to_match)
 
   defp match_value(:string_with_format, {matcher, :xml}, value_to_match)
        when is_binary(matcher) and is_binary(value_to_match),

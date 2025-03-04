@@ -3,11 +3,15 @@ defmodule HTTPEx.Backend.Mock.XML do
   Parses the given XML and removes any clutter from it, so you can
   safely compare it with another XML string.
   """
-  @spec normalize(String.t()) :: String.t()
+  @spec normalize(String.t()) :: String.t() | nil
   def normalize(xml_string) when is_binary(xml_string) do
-    parsed_xml = SweetXml.parse(xml_string, space: :normalize)
+    case parse(xml_string) do
+      {:ok, parsed} ->
+        :xmerl.export([parsed], __MODULE__)
 
-    :xmerl.export([parsed_xml], __MODULE__)
+      :error ->
+        nil
+    end
   end
 
   def unquote(:"#xml-inheritance#")() do
@@ -88,5 +92,13 @@ defmodule HTTPEx.Backend.Mock.XML do
       data,
       fn d -> !is_integer(Enum.at(d, 0)) end
     )
+  end
+
+  defp parse(xml_string) do
+    try do
+      {:ok, SweetXml.parse(xml_string, space: :normalize)}
+    catch
+      :exit, _ -> :error
+    end
   end
 end
