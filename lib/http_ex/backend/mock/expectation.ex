@@ -7,6 +7,7 @@ defmodule HTTPEx.Backend.Mock.Expectation do
 
   import HTTPEx.Clients, only: [def_to_client_response: 0]
 
+  alias HTTPEx.Backend.Mock.XML
   alias __MODULE__
   alias HTTPEx.Request
   alias HTTPEx.Shared
@@ -36,7 +37,7 @@ defmodule HTTPEx.Backend.Mock.Expectation do
             response: %{status: 200, body: "OK"},
             type: :assertion
 
-  @type string_formats() :: :json
+  @type string_formats() :: :json | :xml
 
   @type func_matcher() :: (Request.t() -> boolean()) | (Request.t() -> {boolean(), map()})
   @type string_matcher() :: String.t()
@@ -315,6 +316,9 @@ defmodule HTTPEx.Backend.Mock.Expectation do
       iex> Expectation.set_match!(%Expectation{}, :body, {"{}", :json})
       %Expectation{matchers: %{body: {"{}", :json}, headers: :any, host: :any, method: :any, path: :any, port: :any, query: :any}}
 
+      iex> Expectation.set_match!(%Expectation{}, :body, {"<test>a</test>", :xml})
+      %Expectation{matchers: %{body: {"<test>a</test>", :xml}, headers: :any, host: :any, method: :any, path: :any, port: :any, query: :any}}
+
       iex> Expectation.set_match!(%Expectation{}, :host, nil)
       ** (ArgumentError) Invalid type used for matcher field `host`
 
@@ -526,6 +530,9 @@ defmodule HTTPEx.Backend.Mock.Expectation do
       iex> Expectation.get_matcher_type(:body, {"{}", :json})
       :string_with_format
 
+      iex> Expectation.get_matcher_type(:body, {"<a>b</a>", :xml})
+      :string_with_format
+
       iex> Expectation.get_matcher_type(:host, fn _request -> true end)
       :func
 
@@ -610,6 +617,7 @@ defmodule HTTPEx.Backend.Mock.Expectation do
       {false, [:method, :headers, :body, :path, :port], [:host, :query], %{"api_version" => "v2", "var" => 1}}
 
   A couple of examples using the body formatters.
+
   JSON:
 
       iex> payload = JSON.encode!(%{username: "test"})
@@ -630,6 +638,25 @@ defmodule HTTPEx.Backend.Mock.Expectation do
       ...> )
       {true, [:method, :headers, :query, :body, :host, :path, :port], [], %{}}
 
+    XML:
+
+        iex> payload = "<test>data</test>"
+        ...> formatted_payload = "<test>\\n  data\\n</test>"
+        iex> expectation =
+        ...>   %Expectation{}
+        ...>   |> Expectation.set_match!(:host, "www.example.com")
+        ...>   |> Expectation.set_match!(:port, 80)
+        ...>   |> Expectation.set_match!(:body, {formatted_payload, :xml})
+        ...>   |> Expectation.set_match!(:method, :post)
+        iex> Expectation.match_request(
+        ...>   %Request{
+        ...>     url: "http://www.example.com/api/v1/path/test?token=XYZ&user_id=1337",
+        ...>     body: payload,
+        ...>     method: :post
+        ...>   },
+        ...>   expectation
+        ...> )
+        {true, [:method, :headers, :query, :body, :host, :path, :port], [], %{}}
   """
   @spec match_request(Request.t(), Expectation.t()) :: match_result()
   def match_request(%Request{} = request, %Expectation{} = expectation) do
@@ -894,6 +921,10 @@ defmodule HTTPEx.Backend.Mock.Expectation do
        when is_binary(matcher) and is_binary(value_to_match),
        do: JSON.decode!(matcher) == JSON.decode!(value_to_match)
 
+  defp match_value(:string_with_format, {matcher, :xml}, value_to_match)
+       when is_binary(matcher) and is_binary(value_to_match),
+       do: XML.normalize(matcher) == XML.normalize(value_to_match)
+
   defp match_value(:int, matcher, value_to_match)
        when is_integer(matcher) and is_integer(value_to_match),
        do: matcher === value_to_match
@@ -944,6 +975,8 @@ defmodule HTTPEx.Backend.Mock.Expectation do
   defp valid_value_of_type?(value, :string), do: is_binary(value)
 
   defp valid_value_of_type?({value, :json}, :string_with_format) when is_binary(value), do: true
+
+  defp valid_value_of_type?({value, :xml}, :string_with_format) when is_binary(value), do: true
 
   defp valid_value_of_type?({value, :form}, :string_with_format) when is_map(value), do: true
   defp valid_value_of_type?(_value, :string_with_format), do: false
