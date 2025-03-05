@@ -131,7 +131,7 @@ defmodule HTTPEx.Backend.Mock.Expectation do
     body: [:func, :string, :string_with_format, :regex, :wildcard],
     headers: [:func, :keyword_list, :wildcard],
     host: [:func, :string, :regex, :wildcard],
-    method: [{:enum, [:post, :get]}, :wildcard],
+    method: [{:enum, [:post, :get, :put]}, :wildcard],
     path: [:func, :string, :regex, :wildcard],
     port: [:int, :wildcard],
     query: [:func, :map, :wildcard]
