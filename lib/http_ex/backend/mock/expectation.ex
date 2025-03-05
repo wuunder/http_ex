@@ -79,6 +79,7 @@ defmodule HTTPEx.Backend.Mock.Expectation do
   @type response_map() :: %{
           :status => Plug.Conn.status(),
           :body => String.t(),
+          optional(:delay) => number(),
           optional(:headers) => list(),
           optional(:replace_body_vars) => boolean()
         }
@@ -886,6 +887,8 @@ defmodule HTTPEx.Backend.Mock.Expectation do
         body
       end
 
+    if response[:delay], do: :timer.sleep(response[:delay])
+
     to_client_response(client, :ok, %{
       status_code: status,
       body: body,
@@ -1038,10 +1041,12 @@ defmodule HTTPEx.Backend.Mock.Expectation do
     if Map.has_key?(response, :headers) and not is_list(response[:headers]),
       do: raise(ArgumentError, "Response headers should be a list with tuples")
 
+    if Map.has_key?(response, :delay) and not is_number(response[:delay]),
+      do: raise(ArgumentError, "Response should be a number")
+
     :ok
   end
 
-  defp validate_response_option!(%{status: _, body: _}), do: :ok
   defp validate_response_option!(response) when is_function(response, 1), do: :ok
 
   defp validate_response_option!({:error, reason}) when is_atom(reason) and not is_nil(reason),
