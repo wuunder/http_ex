@@ -7,4 +7,4 @@ config :opentelemetry, :processors, [
   {:otel_simple_processor, %{}}
 ]
 
-config :http_ex, backend: HTTPEx.Backend.Mock, default_pool: HTTPEx.FinchTestPool
+config :http_ex, backend: HTTPEx.Backend.Mock, pool: HTTPEx.FinchTestPool
