@@ -716,10 +716,10 @@ defmodule HTTPEx.Backend.Mock.Expectation do
       ...>     }
       ...>   )
       ...>
-      ...> match == expectation_2
+      ...> match == expectation_1
       true
       iex> vars
-      %{"api_version" => "v1"}
+      %{}
       iex> {:ok, match, vars} =
       ...>   Expectation.find_matching_expectation(
       ...>     expectations,
@@ -751,13 +751,72 @@ defmodule HTTPEx.Backend.Mock.Expectation do
         end
       end)
 
+    number_of_expectations = length(expectations)
+
+    # Walk through expectations.
+    # Now since multiple expectations can potentially be matched, walk through the
+    # expectations that matched and sort them on a score.
+    #
+    # From left to right, sorting descending, the scores are calculated as follows:
+    #
+    # - matches:
+    #   Each field that matches, get a point
+    #
+    # - expectations:
+    #   Expectations that have been met, get a point
+    #
+    # - calls:
+    #   Expectations that have a certain number of expected calls, get a score of 1
+    #   Expectations that don't expect any calls, or have already reached the max number of calls, get a score of 0
+    #
+    # - priority:
+    #   Developers can boost the priority of an expectation by changing the `priority` field
+    #
+    # - index:
+    #   The last score in the list, is the index in the list.
+    #   Expectations added last, are more likely to be scored higher than others.
+    #
     sorted_expectations =
       Enum.sort_by(
         matching_expectations,
         fn {expectation, match_result} ->
           {true, fields, _misses, _vars} = match_result
 
-          {length(fields), expectation.priority, expectation.index}
+          match_score = length(fields)
+
+          expects_calls? = expectation.type == :assertion && expectation.min_calls >= 1
+
+          has_calls_left? =
+            expectation.max_calls != :infinity && expectation.calls < expectation.max_calls
+
+          calls_score =
+            if expects_calls? && has_calls_left? do
+              # reverse score index
+              # making two exact matches but with a non-reached-number-of-calls score higher
+              number_of_expectations - expectation.index
+            else
+              0
+            end
+
+          meets_expectations? =
+            if expects_calls? do
+              {matches?, _, _} = match_expects(request, expectation)
+
+              matches?
+            else
+              false
+            end
+
+          expectations_score =
+            if meets_expectations? do
+              # reverse score index
+              # making two exact matches but with a non-reached-number-of-calls score higher1
+              number_of_expectations - expectation.index
+            else
+              0
+            end
+
+          {match_score, expectations_score, calls_score, expectation.priority, expectation.index}
         end,
         :desc
       )

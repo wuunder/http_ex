@@ -416,6 +416,49 @@ defmodule HTTPEx.Backend.Mock.ExpectationTest do
     end
   end
 
+  describe "find_matching_expectation/2" do
+    test "simple" do
+      expectations =
+        expectations_list([
+          expectation(),
+          expectation()
+          |> Expectation.set_match!(:port, 443)
+        ])
+
+      assert_matching(expectations, 0)
+    end
+
+    test "two exact matches, but one gets priority because both have not been called yet but is added first" do
+      expectations = expectations_list([expectation(), expectation()])
+
+      assert_matching(expectations, 0)
+    end
+
+    test "two exact matches, but one gets priority because the first one has already been called" do
+      expectations = expectations_list([expectation(calls: 1), expectation()])
+
+      assert_matching(expectations, 1)
+    end
+
+    test "two exact matches, but one gets priority because it matches all expectations" do
+      expectations =
+        expectations_list([
+          Expectation.set_expect!(expectation(), :query, %{"user_id" => "1337"}),
+          Expectation.set_expect!(expectation(), :query, %{"user_id" => "1338"})
+        ])
+
+      assert_matching(expectations, 0)
+
+      expectations =
+        expectations_list([
+          Expectation.set_expect!(expectation(), :query, %{"user_id" => "1338"}),
+          Expectation.set_expect!(expectation(), :query, %{"user_id" => "1337"})
+        ])
+
+      assert_matching(expectations, 1)
+    end
+  end
+
   defp get_with_match(field, match) do
     expectation = %Expectation{}
 
@@ -429,4 +472,43 @@ defmodule HTTPEx.Backend.Mock.ExpectationTest do
         url: "http://www.example.com"
       }
       |> Map.put(field, value)
+
+  defp simple_request,
+    do: %Request{
+      url: "http://www.example.com/api/v1/path/test?token=XYZ&user_id=1337",
+      body: "Payload OK!",
+      headers: [{"app", "test"}, {"secret", "123"}],
+      method: :post
+    }
+
+  defp expectation(opts \\ []) do
+    %Expectation{
+      type: :assertion,
+      calls: opts[:calls] || 0,
+      min_calls: 1,
+      max_calls: 1
+    }
+    |> Expectation.set_match!(:host, "www.example.com")
+    |> Expectation.set_match!(:port, 80)
+  end
+
+  defp expectations_list(expectations) do
+    expectations
+    |> Enum.with_index()
+    |> Enum.map(fn {expectation, index} ->
+      %{expectation | index: index}
+    end)
+  end
+
+  defp assert_matching(expectations, index_that_matches) do
+    {:ok, match, _vars} =
+      Expectation.find_matching_expectation(
+        expectations,
+        simple_request()
+      )
+
+    expectation_to_match = Enum.at(expectations, index_that_matches)
+
+    assert match == expectation_to_match
+  end
 end
