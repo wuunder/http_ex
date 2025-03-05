@@ -38,6 +38,22 @@ defmodule HTTPEx.Backend.MockTest do
                {:ok, %Finch.Response{body: "OK", headers: [], status: 200, trailers: []}}
     end
 
+    test "ok, with finch and stream" do
+      Mock.expect_request!(
+        endpoint: "http://www.example.com",
+        expect_body: "GET",
+        response: %{status: 200, body: "OK"}
+      )
+
+      assert Mock.request(%Request{
+               client: :finch,
+               url: "http://www.example.com",
+               method: :get,
+               body: {:stream, ["GET"]}
+             }) ==
+               {:ok, %Finch.Response{body: "OK", headers: [], status: 200, trailers: []}}
+    end
+
     test "no matches" do
       Mock.expect_request!(
         endpoint: "http://www.example.com",

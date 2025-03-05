@@ -257,6 +257,8 @@ defmodule HTTPEx.Backend.Mock do
   """
   @impl HTTPEx.Backend.Behaviour
   def request(%Request{} = request) do
+    request = parse_stream(request)
+
     caller_pids = [self() | caller_pids()]
 
     local_owner_pid = fetch_owner_from_callers(@local_server, caller_pids)
@@ -431,4 +433,12 @@ defmodule HTTPEx.Backend.Mock do
       {:error, error, missed} -> {:error, error, missed, expectation}
     end
   end
+
+  defp parse_stream(%Request{body: {:stream, enum}} = request) do
+    body = enum |> Enum.to_list() |> Enum.join()
+
+    %{request | body: body}
+  end
+
+  defp parse_stream(%Request{} = request), do: request
 end
