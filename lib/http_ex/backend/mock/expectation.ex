@@ -7,6 +7,7 @@ defmodule HTTPEx.Backend.Mock.Expectation do
 
   import HTTPEx.Clients, only: [def_to_client_response: 0]
 
+  alias HTTPEx.Backend.Mock.Form
   alias HTTPEx.Backend.Mock.JSON
   alias HTTPEx.Backend.Mock.XML
   alias __MODULE__
@@ -38,7 +39,7 @@ defmodule HTTPEx.Backend.Mock.Expectation do
             response: %{status: 200, body: "OK"},
             type: :assertion
 
-  @type string_formats() :: :json | :xml
+  @type string_formats() :: :json | :xml | :form
 
   @type func_matcher() :: (Request.t() -> boolean()) | (Request.t() -> {boolean(), map()})
   @type string_matcher() :: String.t()
@@ -320,6 +321,9 @@ defmodule HTTPEx.Backend.Mock.Expectation do
       iex> Expectation.set_match!(%Expectation{}, :body, {"<test>a</test>", :xml})
       %Expectation{matchers: %{body: {"<test>a</test>", :xml}, headers: :any, host: :any, method: :any, path: :any, port: :any, query: :any}}
 
+      iex> Expectation.set_match!(%Expectation{}, :body, {"foo=bar", :form})
+      %Expectation{matchers: %{body: {"foo=bar", :form}, headers: :any, host: :any, method: :any, path: :any, port: :any, query: :any}}
+
       iex> Expectation.set_match!(%Expectation{}, :host, nil)
       ** (ArgumentError) Invalid type used for matcher field `host`
 
@@ -532,6 +536,9 @@ defmodule HTTPEx.Backend.Mock.Expectation do
       :string_with_format
 
       iex> Expectation.get_matcher_type(:body, {"<a>b</a>", :xml})
+      :string_with_format
+
+      iex> Expectation.get_matcher_type(:body, {"foo=bar", :form})
       :string_with_format
 
       iex> Expectation.get_matcher_type(:host, fn _request -> true end)
@@ -926,6 +933,10 @@ defmodule HTTPEx.Backend.Mock.Expectation do
        when is_binary(matcher) and is_binary(value_to_match),
        do: XML.normalize(matcher) == XML.normalize(value_to_match)
 
+  defp match_value(:string_with_format, {matcher, :form}, value_to_match)
+       when is_binary(matcher) and is_binary(value_to_match),
+       do: Form.normalize(matcher) == Form.normalize(value_to_match)
+
   defp match_value(:int, matcher, value_to_match)
        when is_integer(matcher) and is_integer(value_to_match),
        do: matcher === value_to_match
@@ -979,7 +990,8 @@ defmodule HTTPEx.Backend.Mock.Expectation do
 
   defp valid_value_of_type?({value, :xml}, :string_with_format) when is_binary(value), do: true
 
-  defp valid_value_of_type?({value, :form}, :string_with_format) when is_map(value), do: true
+  defp valid_value_of_type?({value, :form}, :string_with_format) when is_binary(value), do: true
+
   defp valid_value_of_type?(_value, :string_with_format), do: false
 
   defp valid_value_of_type?(value, {:enum, allowed}) when is_list(allowed),

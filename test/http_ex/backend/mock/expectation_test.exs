@@ -63,7 +63,7 @@ defmodule HTTPEx.Backend.Mock.ExpectationTest do
                {false, [:method, :headers, :query, :host, :path, :port], [:body], %{}}
     end
 
-    test "string_with_format match" do
+    test "string_with_format :json match" do
       formatted_json = """
       {
         "person": {
@@ -83,7 +83,7 @@ defmodule HTTPEx.Backend.Mock.ExpectationTest do
                {true, [:method, :headers, :query, :body, :host, :path, :port], [], %{}}
     end
 
-    test "string_with_format no match" do
+    test "string_with_format :json no match" do
       formatted_json = """
       {
         "person": {
@@ -104,6 +104,85 @@ defmodule HTTPEx.Backend.Mock.ExpectationTest do
 
       expectation = get_with_match(:body, {unformatted_json, :json})
       request = get_request(:body, formatted_json)
+
+      assert Expectation.match_request(request, expectation) ==
+               {false, [:method, :headers, :query, :host, :path, :port], [:body], %{}}
+    end
+
+    test "string_with_format :xml match" do
+      formatted_xml = """
+      <foo>
+        <text>
+          bar
+        </text>
+        <items>
+          <item>1</item>
+          <item>2</item>
+        </items>
+      </foo>
+      """
+
+      unformatted_xml = """
+      <foo><text>bar</text><items><item>1</item><item>2</item></items></foo>
+      """
+
+      expectation = get_with_match(:body, {formatted_xml, :xml})
+      request = get_request(:body, unformatted_xml)
+
+      assert Expectation.match_request(request, expectation) ==
+               {true, [:method, :headers, :query, :body, :host, :path, :port], [], %{}}
+    end
+
+    test "string_with_format :xml no match" do
+      formatted_xml = """
+      <foo>
+        <text>
+          baz
+        </text>
+        <items>
+          <item>2</item>
+        </items>
+      </foo>
+      """
+
+      unformatted_xml = """
+      <foo><text>bar</text><items><item>1</item><item>2</item></items></foo>
+      """
+
+      expectation = get_with_match(:body, {formatted_xml, :xml})
+      request = get_request(:body, unformatted_xml)
+
+      assert Expectation.match_request(request, expectation) ==
+               {false, [:method, :headers, :query, :host, :path, :port], [:body], %{}}
+    end
+
+    test "string_with_format :form match" do
+      form_1 = """
+      foo=bar&name=Piet
+      """
+
+      form_2 = """
+      name=Piet&foo=bar
+      """
+
+      expectation = get_with_match(:body, {form_1, :form})
+      request = get_request(:body, form_2)
+
+      assert Expectation.match_request(request, expectation) ==
+               {true, [:method, :headers, :query, :body, :host, :path, :port], [], %{}}
+    end
+
+    test "string_with_format :form no match" do
+      form_1 = """
+      foo=baz&name=Jan
+      """
+
+      form_2 = """
+      name=Piet&foo=bar
+      """
+
+      expectation = get_with_match(:body, {form_1, :form})
+      request = get_request(:body, form_2)
 
       assert Expectation.match_request(request, expectation) ==
                {false, [:method, :headers, :query, :host, :path, :port], [:body], %{}}
