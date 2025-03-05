@@ -95,7 +95,7 @@ defmodule HTTPEx do
 
   def post(url, body, options \\ [])
       when is_binary(url) and
-             (is_nil(body) or is_bitstring(body) or is_binary(body) or
+             (is_nil(body) or is_list(body) or is_binary(body) or
                 (is_tuple(body) and tuple_size(body) == 2)) and
              is_list(options),
       do:
@@ -229,7 +229,7 @@ defmodule HTTPEx do
   defp validate_body!(%{body: {:stream, _}}), do: :ok
   defp validate_body!(%{body: {:multipart, _}}), do: :ok
   defp validate_body!(%{body: {:form, _}}), do: :ok
-  defp validate_body!(%{body: body}) when is_binary(body), do: :ok
+  defp validate_body!(%{body: body}) when is_binary(body) or is_list(body), do: :ok
   defp validate_body!(%{body: nil}), do: :ok
   defp validate_body!(_), do: raise(ArgumentError, "Incorrect body given")
 end

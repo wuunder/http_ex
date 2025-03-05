@@ -437,7 +437,7 @@ defmodule HTTPEx.Backend.Mock do
   defp parse_body(%Request{body: {:stream, enum}} = request),
     do: %{request | body: enum |> Enum.to_list() |> Enum.join()}
 
-  defp parse_body(%Request{body: body} = request) when is_bitstring(body),
+  defp parse_body(%Request{body: body} = request) when is_list(body),
     do: %{request | body: to_string(body)}
 
   defp parse_body(%Request{} = request), do: request

@@ -54,6 +54,28 @@ defmodule HTTPEx.Backend.MockTest do
                {:ok, %Finch.Response{body: "OK", headers: [], status: 200, trailers: []}}
     end
 
+    test "ok with bitstring" do
+      Mock.expect_request!(
+        endpoint: "http://www.example.com",
+        method: :post,
+        expect_body: {JSON.encode!(%{"data" => true}), :json},
+        response: %{status: 200, body: "OK"}
+      )
+
+      assert Mock.request(%Request{
+               client: :httpoison,
+               url: "http://www.example.com",
+               method: :post,
+               body: JSON.encode_to_iodata!(%{"data" => true})
+             }) ==
+               {:ok,
+                %HTTPoison.Response{
+                  body: "OK",
+                  headers: [],
+                  status_code: 200
+                }}
+    end
+
     test "no matches" do
       Mock.expect_request!(
         endpoint: "http://www.example.com",
