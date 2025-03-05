@@ -257,7 +257,7 @@ defmodule HTTPEx.Backend.Mock do
   """
   @impl HTTPEx.Backend.Behaviour
   def request(%Request{} = request) do
-    request = parse_stream(request)
+    request = parse_body(request)
 
     caller_pids = [self() | caller_pids()]
 
@@ -434,11 +434,11 @@ defmodule HTTPEx.Backend.Mock do
     end
   end
 
-  defp parse_stream(%Request{body: {:stream, enum}} = request) do
-    body = enum |> Enum.to_list() |> Enum.join()
+  defp parse_body(%Request{body: {:stream, enum}} = request),
+    do: %{request | body: enum |> Enum.to_list() |> Enum.join()}
 
-    %{request | body: body}
-  end
+  defp parse_body(%Request{body: body} = request) when is_bitstring(body),
+    do: %{request | body: to_string(body)}
 
-  defp parse_stream(%Request{} = request), do: request
+  defp parse_body(%Request{} = request), do: request
 end

@@ -95,7 +95,8 @@ defmodule HTTPEx do
 
   def post(url, body, options \\ [])
       when is_binary(url) and
-             (is_nil(body) or is_binary(body) or (is_tuple(body) and tuple_size(body) == 2)) and
+             (is_nil(body) or is_bitstring(body) or is_binary(body) or
+                (is_tuple(body) and tuple_size(body) == 2)) and
              is_list(options),
       do:
         request(%Request{

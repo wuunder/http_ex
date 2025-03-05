@@ -27,7 +27,8 @@ defmodule HTTPEx.Request do
 
   @type t() :: %__MODULE__{
           body:
-            iodata()
+            binary()
+            | iodata()
             | {:stream, Enumerable.t()}
             | {:multipart, Enumerable.t()}
             | {:form, Enumerable.t()}
