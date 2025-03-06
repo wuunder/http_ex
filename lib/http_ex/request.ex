@@ -20,9 +20,9 @@ defmodule HTTPEx.Request do
             start_time: 0,
             url: nil
 
-  @type method() :: :get | :post | :head | :patch | :delete | :options | :put | String.t()
+  @type method() :: :get | :post | :head | :patch | :delete | :options | :put
   @type url() :: String.t() | URI.t()
-  @type headers() :: list()
+  @type headers() :: list(tuple())
   @type options() :: Keyword.t()
 
   @type t() :: %__MODULE__{

@@ -11,10 +11,10 @@ defmodule HTTPEx.Response do
   @type t :: %__MODULE__{
           body: nil | binary(),
           client: atom(),
-          headers: nil | HTTPoison.headers(),
+          headers: nil | list(tuple()),
           parsed_body: nil | map() | list(),
           retries: non_neg_integer(),
-          status: nil | integer()
+          status: nil | non_neg_integer()
         }
 
   @impl true
