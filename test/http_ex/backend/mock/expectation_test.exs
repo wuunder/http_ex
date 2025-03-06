@@ -7,6 +7,25 @@ defmodule HTTPEx.Backend.Mock.ExpectationTest do
   doctest Expectation
 
   describe "match_request/2" do
+    test "exact_value match" do
+      expectation = get_with_match(:body, {:exact_value, {:form, [{"key", {"value"}}]}})
+
+      request = get_request(:body, {:form, [{"key", {"value"}}]})
+
+      assert Expectation.match_request(request, expectation) ==
+               {true, [:method, :headers, :query, :body, :host, :path, :port], [], %{}}
+    end
+
+    test "exact_value no match" do
+      expectation =
+        get_with_match(:body, {:exact_value, {:form, [{"other_key", {"other_value"}}]}})
+
+      request = get_request(:body, {:form, [{"key", {"value"}}]})
+
+      assert Expectation.match_request(request, expectation) ==
+               {false, [:method, :headers, :query, :host, :path, :port], [:body], %{}}
+    end
+
     test "func match" do
       expectation =
         get_with_match(:body, fn request ->
