@@ -20,6 +20,11 @@ defmodule HTTPExTest do
       {:ok, %HTTPoison.Response{status_code: 200, body: "OK!"}}
     end
 
+    def request(%Request{method: :get, url: "http://www.example.com/redirect"} = request) do
+      assert request.headers == []
+      {:ok, %HTTPoison.Response{status_code: 302, body: "You are being redirected"}}
+    end
+
     def request(%Request{method: :get, url: "http://www.example.com/json"} = request) do
       assert request.headers == [{"Content-Type", "application/json"}]
 
@@ -135,6 +140,36 @@ defmodule HTTPExTest do
                   parsed_body: %{"payload" => %{"items" => [1, 2, 3]}},
                   retries: 1,
                   status: 202
+                }}
+    end
+
+    test "OK for redirect" do
+      assert HTTPEx.get("http://www.example.com/redirect", backend: MockBackend) ==
+               {:ok,
+                %HTTPEx.Response{
+                  body: "You are being redirected",
+                  client: :httpoison,
+                  headers: [],
+                  parsed_body: nil,
+                  retries: 1,
+                  status: 302
+                }}
+    end
+
+    test "error for redirect" do
+      assert HTTPEx.get("http://www.example.com/redirect",
+               backend: MockBackend,
+               allow_redirect: false
+             ) ==
+               {:error,
+                %HTTPEx.Error{
+                  body: "You are being redirected",
+                  client: :httpoison,
+                  headers: [],
+                  parsed_body: nil,
+                  retries: 1,
+                  status: 302,
+                  reason: :redirect_not_allowed
                 }}
     end
 

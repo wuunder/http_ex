@@ -14,7 +14,8 @@ defmodule HTTPEx.Clients.HTTPoison do
             [
               timeout: request.options[:timeout],
               recv_timeout: request.options[:receive_timeout],
-              ssl: request.options[:ssl]
+              ssl: request.options[:ssl],
+              follow_redirect: request.options[:follow_redirect]
             ]
             |> Enum.reject(&is_nil(elem(&1, 1)))
 

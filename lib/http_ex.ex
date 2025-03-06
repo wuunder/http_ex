@@ -208,6 +208,7 @@ defmodule HTTPEx do
         |> Logging.log()
         |> backend.request()
         |> to_response(request.retries)
+        |> validate_response(request)
         |> Logging.trace()
         |> Logging.log()
       end)
@@ -225,6 +226,25 @@ defmodule HTTPEx do
 
   defp request_options(options),
     do: options |> Keyword.delete(:headers) |> Keyword.delete(:client)
+
+  defp validate_response({:ok, %Response{} = response} = result, %Request{} = request) do
+    if request.options[:allow_redirect] == false && response.status in [301, 302, 303, 307] do
+      {:error,
+       %Error{
+         body: response.body,
+         client: response.client,
+         headers: response.headers,
+         parsed_body: response.parsed_body,
+         reason: :redirect_not_allowed,
+         retries: response.retries,
+         status: response.status
+       }}
+    else
+      result
+    end
+  end
+
+  defp validate_response({:error, %Error{}} = result, _request), do: result
 
   defp validate_body!(%{body: {:stream, _}}), do: :ok
   defp validate_body!(%{body: {:multipart, _}}), do: :ok

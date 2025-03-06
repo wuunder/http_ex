@@ -5,6 +5,7 @@ defmodule HTTPEx.Request do
   alias __MODULE__
   alias HTTPEx.Shared
 
+  @default_allow_redirect true
   @default_retry_error_codes [:closed, :timeout]
   @default_retry_status_codes [500, 502, 503, 504]
   @default_max_retries 3
@@ -49,13 +50,17 @@ defmodule HTTPEx.Request do
 
     iex> request = Request.init(%Request{url: "http://www.example.com", method: :get})
     ...> request.options
-    [pool: HTTPEx.FinchTestPool, retry_status_codes: [500, 502, 503, 504], retry_error_codes: [:closed, :timeout], transport_max_retries: 3, transport_retry_timeout: 2000]
+    [pool: HTTPEx.FinchTestPool, retry_status_codes: [500, 502, 503, 504], retry_error_codes: [:closed, :timeout], transport_max_retries: 3, transport_retry_timeout: 2000, allow_redirects: true]
 
   """
   @spec init(Request.t()) :: Request.t()
   def init(%Request{} = request) do
     merged_options =
       request.options
+      |> Keyword.put_new(
+        :allow_redirects,
+        Shared.config(:allow_redirect, @default_allow_redirect)
+      )
       |> Keyword.put_new(
         :transport_retry_timeout,
         Shared.config(:retry_timeout, @default_retry_timeout)
