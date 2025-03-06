@@ -2,15 +2,18 @@ defmodule HTTPEx.Backend.Mock.Expectation do
   @moduledoc """
   Defines a HTTP mock expectation.
   Consists of a matching part and an expectation part.
+
+  TODO add support for multipart form key/value matchers
+  TODO add support for form key/value matchers
   """
   @behaviour HTTPEx.Traceable
 
   import HTTPEx.Clients, only: [def_to_client_response: 0]
 
+  alias __MODULE__
   alias HTTPEx.Backend.Mock.Form
   alias HTTPEx.Backend.Mock.JSON
   alias HTTPEx.Backend.Mock.XML
-  alias __MODULE__
   alias HTTPEx.Request
   alias HTTPEx.Shared
 
@@ -50,6 +53,7 @@ defmodule HTTPEx.Backend.Mock.Expectation do
   @type map_matcher() :: map()
   @type enum_matcher() :: atom()
   @type int_matcher() :: integer()
+  @type exact_value_matcher() :: {:exact_value, any()}
 
   @type matcher() ::
           func_matcher()
@@ -61,6 +65,7 @@ defmodule HTTPEx.Backend.Mock.Expectation do
           | map_matcher()
           | enum_matcher()
           | int_matcher()
+          | exact_value_matcher()
 
   @type matcher_field_type() ::
           :func
@@ -72,6 +77,7 @@ defmodule HTTPEx.Backend.Mock.Expectation do
           | :map
           | :enum
           | :int
+          | :exact_value
 
   @type match_result() :: {boolean(), list(atom()), list(atom()), map()}
   @type expects_result() :: {boolean(), list(atom()), list(atom())}
@@ -99,7 +105,8 @@ defmodule HTTPEx.Backend.Mock.Expectation do
               | string_matcher()
               | string_with_format_matcher()
               | regex_matcher()
-              | wildcard_matcher(),
+              | wildcard_matcher()
+              | exact_value_matcher(),
             headers: keyword_list_matcher() | wildcard_matcher(),
             path: string_matcher() | regex_matcher() | wildcard_matcher(),
             query: map_matcher() | wildcard_matcher()
@@ -112,7 +119,8 @@ defmodule HTTPEx.Backend.Mock.Expectation do
               | string_matcher()
               | string_with_format_matcher()
               | regex_matcher()
-              | wildcard_matcher(),
+              | wildcard_matcher()
+              | exact_value_matcher(),
             headers: func_matcher() | keyword_list_matcher() | wildcard_matcher(),
             host: func_matcher() | string_matcher() | regex_matcher() | wildcard_matcher(),
             method: enum_matcher() | wildcard_matcher(),
@@ -128,7 +136,7 @@ defmodule HTTPEx.Backend.Mock.Expectation do
         }
 
   @matcher_fields %{
-    body: [:func, :string, :string_with_format, :regex, :wildcard],
+    body: [:func, :string, :string_with_format, :regex, :wildcard, :exact_value],
     headers: [:func, :keyword_list, :wildcard],
     host: [:func, :string, :regex, :wildcard],
     method: [{:enum, [:post, :get, :put]}, :wildcard],
@@ -138,7 +146,7 @@ defmodule HTTPEx.Backend.Mock.Expectation do
   }
 
   @expects_fields %{
-    body: [:func, :string, :string_with_format, :regex, :wildcard],
+    body: [:func, :string, :string_with_format, :regex, :wildcard, :exact_value],
     headers: [:func, :keyword_list, :wildcard],
     path: [:func, :string, :regex, :wildcard],
     query: [:func, :map, :wildcard]
@@ -316,6 +324,9 @@ defmodule HTTPEx.Backend.Mock.Expectation do
       iex> Expectation.set_match!(%Expectation{}, :body, "OK!")
       %Expectation{matchers: %{body: "OK!", headers: :any, host: :any, method: :any, path: :any, port: :any, query: :any}}
 
+      iex> Expectation.set_match!(%Expectation{}, :body, {:exact_value, {:form, "OK!"}})
+      %Expectation{matchers: %{body: {:exact_value, {:form, "OK!"}}, headers: :any, host: :any, method: :any, path: :any, port: :any, query: :any}}
+
       iex> Expectation.set_match!(%Expectation{}, :body, {"{}", :json})
       %Expectation{matchers: %{body: {"{}", :json}, headers: :any, host: :any, method: :any, path: :any, port: :any, query: :any}}
 
@@ -435,6 +446,16 @@ defmodule HTTPEx.Backend.Mock.Expectation do
 
   ## Examples
 
+  An exact value matcher (note: uses ===):
+
+      iex> Expectation.validate_matcher_value(:body, {:exact_value, {:form, [a: "data"]}})
+      :ok
+
+  Note, this matcher cannot be used on all fields:
+
+      iex> Expectation.validate_matcher_value(:host, {:exact_value, "some-host"})
+      {:error, :invalid_field_type}
+
   A string matcher:
 
       iex> Expectation.validate_matcher_value(:host, "localhost")
@@ -542,6 +563,9 @@ defmodule HTTPEx.Backend.Mock.Expectation do
       iex> Expectation.get_matcher_type(:body, {"foo=bar", :form})
       :string_with_format
 
+      iex> Expectation.get_matcher_type(:body, {:exact_value, {:form, "data"}})
+      :exact_value
+
       iex> Expectation.get_matcher_type(:host, fn _request -> true end)
       :func
 
@@ -565,6 +589,7 @@ defmodule HTTPEx.Backend.Mock.Expectation do
 
       iex> Expectation.get_matcher_type(:method, :get)
       :enum
+
 
   """
   @spec get_matcher_type(atom(), matcher()) :: matcher_field_type()
@@ -963,6 +988,9 @@ defmodule HTTPEx.Backend.Mock.Expectation do
   defp get_request_value(%Request{} = request, field, _type),
     do: Request.get_field(request, field)
 
+  defp match_value(:exact_value, {:exact_value, matcher}, value_to_match),
+    do: matcher === value_to_match
+
   defp match_value(:func, func, %Request{} = request) when is_function(func) do
     case func.(request) do
       true -> true
@@ -1043,6 +1071,9 @@ defmodule HTTPEx.Backend.Mock.Expectation do
       {:error, :invalid_field_type}
     end
   end
+
+  defp valid_value_of_type?({:exact_value, _}, :exact_value), do: true
+  defp valid_value_of_type?(_, :exact_value), do: false
 
   defp valid_value_of_type?(value, :wildcard), do: value == :any
   defp valid_value_of_type?(value, :func), do: is_function(value, 1)
