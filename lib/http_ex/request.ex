@@ -182,4 +182,8 @@ defmodule HTTPEx.Request do
   @spec trace_method(atom() | String.t()) :: String.t()
   def trace_method(method) when is_atom(method) or is_binary(method),
     do: String.upcase("#{method}")
+
+  @impl true
+  @spec telemetry_event_name() :: :request
+  def telemetry_event_name, do: :request
 end

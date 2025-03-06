@@ -12,11 +12,16 @@ defmodule HTTPEx.Logging do
   require Logger
 
   def trace(%module{} = entity) do
-    if tracing?() do
-      entity
-      |> module.trace_attrs()
-      |> Tracing.set_attributes()
-    end
+    trace_attrs = module.trace_attrs(entity)
+    if tracing?(), do: Tracing.set_attributes(trace_attrs)
+
+    if telemetry?(),
+      do:
+        :telemetry.execute(
+          [:http_ex, module.telemetry_event_name()],
+          %{},
+          Enum.into(trace_attrs, %{})
+        )
 
     entity
   end
@@ -53,5 +58,6 @@ defmodule HTTPEx.Logging do
 
   defp logging?, do: not is_nil(log_fn())
 
-  defp tracing?, do: Shared.config(:open_telemetry)
+  defp tracing?, do: Shared.config(:tracing)
+  defp telemetry?, do: Shared.config(:telemetry)
 end

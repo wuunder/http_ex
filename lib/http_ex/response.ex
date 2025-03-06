@@ -60,4 +60,8 @@ defmodule HTTPEx.Response do
       {"http.retries", response.retries}
     ])
   end
+
+  @impl true
+  @spec telemetry_event_name() :: :response
+  def telemetry_event_name, do: :response
 end

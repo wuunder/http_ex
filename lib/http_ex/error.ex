@@ -53,4 +53,8 @@ defmodule HTTPEx.Error do
       {"http.retries", error.retries}
     ])
   end
+
+  @impl true
+  @spec telemetry_event_name() :: :error
+  def telemetry_event_name, do: :error
 end
