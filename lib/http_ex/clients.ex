@@ -13,6 +13,20 @@ defmodule HTTPEx.Clients do
     end
   end
 
+  defmacro def_request_options do
+    quote do
+      unquote(HTTPEx.Clients.HTTPoison.define_request_options_functions())
+      unquote(HTTPEx.Clients.Finch.define_request_options_functions())
+
+      def request_options(%HTTPEx.Request{client: client}),
+        do:
+          raise(
+            ArgumentError,
+            "Cannot retrieve HTTP client options. Unsupported client `#{client}`"
+          )
+    end
+  end
+
   defmacro def_to_response do
     quote do
       unquote(HTTPEx.Clients.HTTPoison.define_to_response_functions())

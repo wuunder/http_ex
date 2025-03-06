@@ -10,16 +10,28 @@ defmodule HTTPEx.Clients.Finch do
     quote do
       if Code.ensure_loaded?(Finch) do
         def request(%HTTPEx.Request{client: :finch} = request) do
-          opts =
-            [
-              pool_timeout: request.options[:timeout],
-              receive_timeout: request.options[:receive_timeout]
-            ]
-            |> Enum.reject(&is_nil(elem(&1, 1)))
-
           request.method
           |> Finch.build(request.url, request.headers, request.body)
-          |> Finch.request(request.options[:pool], opts)
+          |> Finch.request(request.options[:pool], request_options(request))
+        end
+      end
+    end
+  end
+
+  @doc """
+  Function to generate request_options functions for Finch requests
+  """
+  def define_request_options_functions do
+    quote do
+      if Code.ensure_loaded?(Finch) do
+        def request_options(%HTTPEx.Request{client: :finch} = request) do
+          [
+            pool_timeout: request.options[:timeout],
+            receive_timeout: request.options[:receive_timeout],
+            ssl: request.options[:ssl],
+            follow_redirect: request.options[:follow_redirect]
+          ]
+          |> Enum.reject(&is_nil(elem(&1, 1)))
         end
       end
     end

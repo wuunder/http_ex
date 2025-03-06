@@ -13,7 +13,8 @@ defmodule HTTPEx.Clients.HTTPoison do
           opts =
             [
               timeout: request.options[:timeout],
-              recv_timeout: request.options[:receive_timeout]
+              recv_timeout: request.options[:receive_timeout],
+              ssl: request.options[:ssl]
             ]
             |> Enum.reject(&is_nil(elem(&1, 1)))
 
@@ -24,6 +25,24 @@ defmodule HTTPEx.Clients.HTTPoison do
             request.headers,
             opts
           )
+        end
+      end
+    end
+  end
+
+  @doc """
+  Function to generate request_options functions for HTTPoison requests
+  """
+  def define_request_options_functions do
+    quote do
+      if Code.ensure_loaded?(HTTPoison) do
+        def request_options(%HTTPEx.Request{client: :httpoison} = request) do
+          [
+            timeout: request.options[:timeout],
+            recv_timeout: request.options[:receive_timeout],
+            ssl: request.options[:ssl]
+          ]
+          |> Enum.reject(&is_nil(elem(&1, 1)))
         end
       end
     end
