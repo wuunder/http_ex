@@ -159,6 +159,40 @@ defmodule HTTPEx do
     end)
   end
 
+  @doc """
+  Gets value of request, response or error headers.
+
+  ## Examples
+
+    iex> HTTPEx.get_header(%Request{method: :get, url: "http://example.com", headers: [{"Content-Type", "application/json"}, {"Secret", "123"}]}, "content-type")
+    "application/json"
+
+    iex> HTTPEx.get_header(%Response{headers: [{"Content-Type", "application/json"}, {"Secret", "123"}]}, "Secret")
+    "123"
+
+    iex> HTTPEx.get_header(%Response{headers: [{"Content-Type", "application/json"}, {"Secret", "123"}]}, "non-existent-key")
+    nil
+
+  """
+  @spec get_header(Request.t() | Response.t() | Error.t() | list(tuple()), String.t()) ::
+          String.t() | nil
+  def get_header(%Request{} = request, key) when is_binary(key),
+    do: get_header(request.headers, key)
+
+  def get_header(%Response{} = response, key) when is_binary(key),
+    do: get_header(response.headers, key)
+
+  def get_header(%Error{} = error, key) when is_binary(key), do: get_header(error.headers, key)
+
+  def get_header(headers, key) when is_list(headers) and is_binary(key) do
+    case Enum.find(headers, fn {existing_key, _} ->
+           String.downcase(key) == String.downcase(existing_key)
+         end) do
+      {_key, value} -> value
+      _ -> nil
+    end
+  end
+
   def_to_response()
 
   defp retry?(_request, {:ok, %Response{}}), do: false

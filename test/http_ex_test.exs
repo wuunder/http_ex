@@ -4,6 +4,7 @@ defmodule HTTPExTest do
 
   alias HTTPEx.Error
   alias HTTPEx.Request
+  alias HTTPEx.Response
   alias HTTPExTest.MockBackend
 
   doctest HTTPEx
