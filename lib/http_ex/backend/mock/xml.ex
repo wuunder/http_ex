@@ -7,7 +7,7 @@ defmodule HTTPEx.Backend.Mock.XML do
   def normalize(xml_string) when is_binary(xml_string) do
     case parse(xml_string) do
       {:ok, parsed} ->
-        :xmerl.export([parsed], __MODULE__)
+        :xmerl.export([parsed], __MODULE__) |> to_string()
 
       :error ->
         nil
