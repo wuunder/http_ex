@@ -80,7 +80,7 @@ defmodule HTTPEx.Backend.Mock.Expectation do
           | :exact_value
 
   @type match_result() :: {boolean(), list(atom()), list(atom()), map()}
-  @type expects_result() :: {boolean(), list(atom()), list(atom())}
+  @type expects_result() :: {boolean(), list(atom()), list({atom(), any(), any()})}
 
   @type response_map() :: %{
           :status => Plug.Conn.status(),
@@ -705,7 +705,7 @@ defmodule HTTPEx.Backend.Mock.Expectation do
         case match_value(type, match_value, request_value) do
           {true, vars} -> {[field | all_fields], Map.merge(all_vars, vars)}
           true -> {[field | all_fields], all_vars}
-          false -> {all_fields, all_vars}
+          {false, _, _} -> {all_fields, all_vars}
         end
       end)
 
@@ -868,7 +868,7 @@ defmodule HTTPEx.Backend.Mock.Expectation do
   end
 
   @spec validate_expectations(Request.t(), Expectation.t()) ::
-          :ok | {:error, atom(), list(atom())}
+          :ok | {:error, :expectations_not_met, list({atom(), any(), any()})}
   def validate_expectations(%Request{} = request, %Expectation{} = expectation) do
     case match_expects(request, expectation) do
       {true, _, _} -> :ok
@@ -911,27 +911,31 @@ defmodule HTTPEx.Backend.Mock.Expectation do
       ...>   },
       ...>   expectation
       ...> )
-      {false, [:path], [:body, :query, :headers]}
+      {
+        false,
+        [:path],
+        [
+        {:body, true, false}, {:query, %{"user_id" => "1337"}, %{"token" => "XYZ", "user_id" => "1339"}}, {:headers, [{"secret", "123"}], [{"app", "test"}, {"geheim", "123"}]}]}
 
   """
   @spec match_expects(Request.t(), Expectation.t()) :: expects_result()
   def match_expects(%Request{} = request, %Expectation{} = expectation) do
     fields = Map.keys(@expects_fields)
 
-    matching_fields =
-      Enum.filter(fields, fn field ->
+    {matches, mismatches} =
+      Enum.reduce(fields, {[], []}, fn field, {matches, mismatches} ->
         expect_value = get_expect(expectation, field)
         type = get_matcher_type(field, expect_value)
         request_value = get_request_value(request, field, type)
 
         case match_value(type, expect_value, request_value) do
-          {true, _vars} -> true
-          true -> true
-          false -> false
+          {true, _vars} -> {matches ++ [field], mismatches}
+          true -> {matches ++ [field], mismatches}
+          {false, left, right} -> {matches, mismatches ++ [{field, left, right}]}
         end
       end)
 
-    {length(fields) == length(matching_fields), matching_fields, fields -- matching_fields}
+    {length(fields) == length(matches), matches, mismatches}
   end
 
   @doc """
@@ -989,13 +993,13 @@ defmodule HTTPEx.Backend.Mock.Expectation do
     do: Request.get_field(request, field)
 
   defp match_value(:exact_value, {:exact_value, matcher}, value_to_match),
-    do: matcher === value_to_match
+    do: match_left_right_exact(matcher, value_to_match)
 
   defp match_value(:func, func, %Request{} = request) when is_function(func) do
     case func.(request) do
       true -> true
       {true, %{} = vars} -> {true, vars}
-      _ -> false
+      _ -> {false, true, false}
     end
   end
 
@@ -1005,56 +1009,91 @@ defmodule HTTPEx.Backend.Mock.Expectation do
     if Regex.match?(regex, "#{value_to_match}") do
       {true, Regex.named_captures(regex, "#{value_to_match}")}
     else
-      false
+      {false, regex, value_to_match}
     end
   end
 
   defp match_value(:string, matcher, value_to_match)
-       when is_binary(matcher) and is_binary(value_to_match),
-       do:
-         String.downcase(String.trim(matcher)) ==
-           String.downcase(String.trim("#{value_to_match}"))
+       when is_binary(matcher) and is_binary(value_to_match) do
+    match_left_right(
+      String.downcase(String.trim(matcher)),
+      String.downcase(String.trim("#{value_to_match}"))
+    )
+  end
 
   defp match_value(:string_with_format, {matcher, :json}, value_to_match)
-       when is_binary(matcher) and is_binary(value_to_match),
-       do: JSON.normalize(matcher) == JSON.normalize(value_to_match)
+       when is_binary(matcher) and is_binary(value_to_match) do
+    match_left_right(
+      JSON.normalize(matcher),
+      JSON.normalize(value_to_match)
+    )
+  end
 
   defp match_value(:string_with_format, {matcher, :xml}, value_to_match)
-       when is_binary(matcher) and is_binary(value_to_match),
-       do: XML.normalize(matcher) == XML.normalize(value_to_match)
+       when is_binary(matcher) and is_binary(value_to_match) do
+    match_left_right(
+      XML.normalize(matcher),
+      XML.normalize(value_to_match)
+    )
+  end
 
   defp match_value(:string_with_format, {matcher, :form}, value_to_match)
        when is_binary(matcher) and is_binary(value_to_match),
-       do: Form.normalize(matcher) == Form.normalize(value_to_match)
+       do: match_left_right(Form.normalize(matcher), Form.normalize(value_to_match))
 
   defp match_value(:int, matcher, value_to_match)
        when is_integer(matcher) and is_integer(value_to_match),
-       do: matcher === value_to_match
+       do: match_left_right_exact(matcher, value_to_match)
 
   defp match_value(:map, %{} = matcher, %{} = value_to_match) do
-    Enum.all?(matcher, fn {key, value} ->
-      Map.has_key?(value_to_match, key) && Map.get(value_to_match, key) == value
-    end)
+    if Enum.all?(matcher, fn {key, value} ->
+         Map.has_key?(value_to_match, key) && Map.get(value_to_match, key) == value
+       end) do
+      true
+    else
+      {false, matcher, value_to_match}
+    end
   end
 
   defp match_value(:keyword_list, matcher, value_to_match)
        when is_list(matcher) and is_list(value_to_match) do
-    Enum.all?(matcher, fn {key, value} ->
-      case List.keyfind(value_to_match, key, 0) do
-        {_key, actual_value} ->
-          (match?(%Regex{}, value) && Regex.match?(value, actual_value)) || actual_value == value
+    if Enum.all?(matcher, fn {key, value} ->
+         case List.keyfind(value_to_match, key, 0) do
+           {_key, actual_value} ->
+             (match?(%Regex{}, value) && Regex.match?(value, actual_value)) ||
+               actual_value == value
 
-        _ ->
-          false
-      end
-    end)
+           _ ->
+             false
+         end
+       end) do
+      true
+    else
+      {false, matcher, value_to_match}
+    end
   end
 
   defp match_value(:enum, matcher, value_to_match)
        when not is_nil(matcher) and not is_nil(value_to_match),
-       do: matcher === value_to_match
+       do: match_left_right_exact(matcher, value_to_match)
 
-  defp match_value(_type, _matcher, _value_to_match), do: false
+  defp match_value(_type, matcher, value_to_match), do: {false, matcher, value_to_match}
+
+  defp match_left_right_exact(left, right) do
+    if left === right do
+      true
+    else
+      {false, left, right}
+    end
+  end
+
+  defp match_left_right(left, right) do
+    if left == right do
+      true
+    else
+      {false, left, right}
+    end
+  end
 
   defp validate_field(definition, field) do
     if Map.has_key?(definition, field) do
