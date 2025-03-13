@@ -276,12 +276,10 @@ defmodule HTTPEx.Backend.Mock do
           #{Request.summary(request)}
           """
 
-      {:error, :max_calls_reached, %{max_calls: 0} = expectation} ->
+      {:error, :max_calls_reached, %{max_calls: 0}} ->
         raise AssertionError,
           message: """
           An unexpected HTTP request was made
-
-          #{Expectation.summary(expectation)}
 
           #{Request.summary(request)}
           """
@@ -292,20 +290,18 @@ defmodule HTTPEx.Backend.Mock do
           Maximum number of HTTP calls already made for request
 
           #{Expectation.summary(expectation)}
-
-          #{Request.summary(request)}
           """
 
-      {:error, :expectations_not_met, missed, expectation} ->
+      {:error, :expectations_not_met, [{field, left, right} | _tail], _expectation} ->
+        # to keep things a bit more clear for the developer
+        # we only fail on the first expectation we found
         raise AssertionError,
+          left: left,
+          right: right,
           message: """
-          The HTTP request that was made, didn't match one or more expectations.
+          The HTTP request that was made, didn't match an expectation
 
-          #{Shared.attr("Fields mismatched")} #{Shared.value(missed)}
-
-          #{Expectation.summary(expectation)}
-
-          #{Request.summary(request)}
+          #{Shared.attr("Field mismatch")} #{Shared.value(field)}
           """
 
       {:error, error} ->

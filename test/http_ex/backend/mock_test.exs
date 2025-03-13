@@ -140,7 +140,7 @@ defmodule HTTPEx.Backend.MockTest do
       )
 
       assert_raise AssertionError,
-                   ~r/The HTTP request that was made, didn't match one or more expectations/,
+                   ~r/The HTTP request that was made, didn't match an expectation/,
                    fn ->
                      Mock.request(%Request{
                        url: "http://www.example.com",
