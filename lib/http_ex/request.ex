@@ -180,7 +180,7 @@ defmodule HTTPEx.Request do
       {"http.target", "#{uri.path}?#{uri.query}"},
       {"http.scheme", to_string(uri.scheme)},
       {"http.request_body", request.body},
-      {"http.request_headers", request.headers}
+      {"http.request_headers", inspect(request.headers)}
     ])
   end
 

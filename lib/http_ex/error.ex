@@ -48,7 +48,7 @@ defmodule HTTPEx.Error do
       {"error", true},
       {"http.error", Shared.inspect_value(error.reason)},
       {"http.response_body", error.body},
-      {"http.response_headers", error.headers},
+      {"http.response_headers", inspect(error.headers)},
       {"http.status_code", error.status || 0},
       {"http.retries", error.retries}
     ])
