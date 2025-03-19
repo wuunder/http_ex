@@ -202,11 +202,14 @@ defmodule HTTPEx.Backend.Mock do
       ...>   endpoint: "http://www.example.com",
       ...>   response: %{status: 200, body: "OK!", headers: [{"Content-Type", "application/json"}]},
       ...> )
-
   """
   @spec expect_request!(Keyword.t()) :: :ok | {:error, atom()}
   def expect_request!(opts) when is_list(opts) do
-    expectation = Expectation.new!(Keyword.put(opts, :type, :assert))
+    expectation =
+      opts
+      |> Keyword.put(:type, :assert)
+      |> Expectation.new!()
+
     add!(@local_server, expectation)
   end
 
@@ -247,7 +250,11 @@ defmodule HTTPEx.Backend.Mock do
   See `expect_request!/1`
   """
   def stub_request!(opts) when is_list(opts) do
-    expectation = Expectation.new!(Keyword.put(opts, :type, :stub))
+    expectation =
+      opts
+      |> Keyword.put(:type, :stub)
+      |> Expectation.new!()
+
     server = if Keyword.get(opts, :global), do: @global_server, else: @local_server
     add!(server, expectation)
   end
@@ -274,6 +281,11 @@ defmodule HTTPEx.Backend.Mock do
           No HTTP request found that are registered with `expect_request`
 
           #{Request.summary(request)}
+
+          Registered expectations:
+
+          #{registered_expectations_summary(@local_server, local_owner_pid)}
+          #{registered_expectations_summary(@global_server, global_owner_pid)}
           """
 
       {:error, :max_calls_reached, %{max_calls: 0}} ->
@@ -437,4 +449,15 @@ defmodule HTTPEx.Backend.Mock do
     do: %{request | body: to_string(body)}
 
   defp parse_body(%Request{} = request), do: request
+
+  defp registered_expectations_summary(server, owner_pid) do
+    server
+    |> list(owner_pid)
+    |> Enum.filter(fn expectation ->
+      expectation.max_calls == :infinity || expectation.calls < expectation.max_calls
+    end)
+    |> Enum.map_join("\n", fn expectation ->
+      Expectation.summary(expectation)
+    end)
+  end
 end

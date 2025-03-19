@@ -40,6 +40,7 @@ defmodule HTTPEx.Backend.Mock.Expectation do
             min_calls: 1,
             priority: 0,
             response: %{status: 200, body: "OK"},
+            stacktrace: nil,
             type: :assertion
 
   @type string_formats() :: :json | :xml | :form
@@ -132,6 +133,7 @@ defmodule HTTPEx.Backend.Mock.Expectation do
           min_calls: non_neg_integer(),
           priority: non_neg_integer(),
           response: response_func() | response_map() | response_error(),
+          stacktrace: nil | tuple(),
           type: :assertion | :stub
         }
 
@@ -171,6 +173,7 @@ defmodule HTTPEx.Backend.Mock.Expectation do
   - expect_path
   - expect_query
   - calls
+  - stacktrace
 
   ## Examples
 
@@ -259,6 +262,7 @@ defmodule HTTPEx.Backend.Mock.Expectation do
       min_calls: min_calls,
       max_calls: max_calls,
       response: response,
+      stacktrace: Keyword.get(opts, :stacktrace),
       type: expectation_type
     }
     |> set_expect!(:body, expect_body)
@@ -277,39 +281,46 @@ defmodule HTTPEx.Backend.Mock.Expectation do
   @impl true
   @spec summary(Expectation.t()) :: String.t()
   def summary(%Expectation{} = expectation) do
+    stacktrace =
+      if expectation.stacktrace do
+        {file, line, _mod} = expectation.stacktrace
+
+        "#{file}:#{line}\n\n"
+      end
+
     """
-      #{Shared.header("HTTP expectation ##{expectation.index}")}
+    #{Shared.header("HTTP expectation ##{expectation.index}")}
 
-      #{Shared.attr("Description")} #{Shared.value(expectation.description)}
+    #{stacktrace}#{Shared.attr("Description")} #{Shared.value(expectation.description)}
 
-      #{Shared.attr("Calls")} ##{expectation.calls}
-      #{Shared.attr("Min calls")} #{Shared.value(expectation.min_calls)}
-      #{Shared.attr("Max calls")} #{Shared.value(expectation.max_calls)}
+    #{Shared.attr("Calls")} ##{expectation.calls}
+    #{Shared.attr("Min calls")} #{Shared.value(expectation.min_calls)}
+    #{Shared.attr("Max calls")} #{Shared.value(expectation.max_calls)}
 
-      #{Shared.attr("Matchers")}
+    #{Shared.attr("Matchers")}
 
-      #{Shared.attr("Host")} #{Shared.value(expectation.matchers.host)}
-      #{Shared.attr("Port")} #{Shared.value(expectation.matchers.port)}
-      #{Shared.attr("Method")} #{Shared.value(expectation.matchers.method)}
-      #{Shared.attr("Path")} #{Shared.value(expectation.matchers.path)}
-      #{Shared.attr("Query")} #{Shared.value(expectation.matchers.query)}
-      #{Shared.attr("Headers")} #{Shared.value(expectation.matchers.headers)}
-      #{Shared.attr("Body")}
+    #{Shared.attr("Host")} #{Shared.value(expectation.matchers.host)}
+    #{Shared.attr("Port")} #{Shared.value(expectation.matchers.port)}
+    #{Shared.attr("Method")} #{Shared.value(expectation.matchers.method)}
+    #{Shared.attr("Path")} #{Shared.value(expectation.matchers.path)}
+    #{Shared.attr("Query")} #{Shared.value(expectation.matchers.query)}
+    #{Shared.attr("Headers")} #{Shared.value(expectation.matchers.headers)}
+    #{Shared.attr("Body")}
 
-      #{Shared.value(expectation.matchers.body)}
+    #{Shared.value(expectation.matchers.body)}
 
-      #{Shared.attr("Expectations")}
+    #{Shared.attr("Expectations")}
 
-      #{Shared.attr("Path")} #{Shared.value(expectation.expects.path)}
-      #{Shared.attr("Query")} #{Shared.value(expectation.expects.query)}
-      #{Shared.attr("Headers")} #{Shared.value(expectation.expects.headers)}
-      #{Shared.attr("Body")}
+    #{Shared.attr("Path")} #{Shared.value(expectation.expects.path)}
+    #{Shared.attr("Query")} #{Shared.value(expectation.expects.query)}
+    #{Shared.attr("Headers")} #{Shared.value(expectation.expects.headers)}
+    #{Shared.attr("Body")}
 
-      #{Shared.value(expectation.expects.body)}
+    #{Shared.value(expectation.expects.body)}
 
-      #{Shared.attr("Response")}
+    #{Shared.attr("Response")}
 
-      #{Shared.value(expectation.response)}
+    #{Shared.value(expectation.response)}
     """
   end
 
