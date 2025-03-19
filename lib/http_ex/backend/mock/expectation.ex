@@ -40,6 +40,7 @@ defmodule HTTPEx.Backend.Mock.Expectation do
             min_calls: 1,
             priority: 0,
             response: %{status: 200, body: "OK"},
+            stacktrace: nil,
             type: :assertion
 
   @type string_formats() :: :json | :xml | :form
@@ -132,6 +133,7 @@ defmodule HTTPEx.Backend.Mock.Expectation do
           min_calls: non_neg_integer(),
           priority: non_neg_integer(),
           response: response_func() | response_map() | response_error(),
+          stacktrace: nil | tuple(),
           type: :assertion | :stub
         }
 
@@ -171,6 +173,7 @@ defmodule HTTPEx.Backend.Mock.Expectation do
   - expect_path
   - expect_query
   - calls
+  - stacktrace
 
   ## Examples
 
@@ -259,6 +262,7 @@ defmodule HTTPEx.Backend.Mock.Expectation do
       min_calls: min_calls,
       max_calls: max_calls,
       response: response,
+      stacktrace: Keyword.get(opts, :stacktrace),
       type: expectation_type
     }
     |> set_expect!(:body, expect_body)
@@ -279,6 +283,8 @@ defmodule HTTPEx.Backend.Mock.Expectation do
   def summary(%Expectation{} = expectation) do
     """
       #{Shared.header("HTTP expectation ##{expectation.index}")}
+
+      #{Exception.format_stacktrace_entry(expectation.stacktrace)}
 
       #{Shared.attr("Description")} #{Shared.value(expectation.description)}
 
