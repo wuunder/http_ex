@@ -284,8 +284,8 @@ defmodule HTTPEx.Backend.Mock do
 
           Registered expectations:
 
-          #{registered_expectations_summary(@local_server, local_owner_pid)}
-          #{registered_expectations_summary(@global_server, global_owner_pid)}
+          #{registered_expectations_summary(request, @local_server, local_owner_pid)}
+          #{registered_expectations_summary(request, @global_server, global_owner_pid)}
           """
 
       {:error, :max_calls_reached, %{max_calls: 0}} ->
@@ -450,14 +450,46 @@ defmodule HTTPEx.Backend.Mock do
 
   defp parse_body(%Request{} = request), do: request
 
-  defp registered_expectations_summary(server, owner_pid) do
-    server
-    |> list(owner_pid)
-    |> Enum.filter(fn expectation ->
-      expectation.max_calls == :infinity || expectation.calls < expectation.max_calls
-    end)
-    |> Enum.map_join("\n", fn expectation ->
-      Expectation.summary(expectation)
+  defp registered_expectations_summary(request, server, owner_pid) do
+    all_matches =
+      server
+      |> list(owner_pid)
+      |> Enum.map(fn expectation ->
+        {expectation, Expectation.match_request(request, expectation)}
+      end)
+
+    partial_matches =
+      all_matches
+      |> Enum.filter(fn {_expectation, {_matches?, matching, _mismatches, _vars}} ->
+        Enum.any?(matching)
+      end)
+      |> Enum.sort_by(
+        fn {_expectation, {_matches?, matching, _mismatches, _vars}} ->
+          length(matching)
+        end,
+        :desc
+      )
+      |> Enum.take(5)
+
+    matches =
+      if Enum.any?(partial_matches) do
+        partial_matches
+      else
+        Enum.take(all_matches, 5)
+      end
+
+    matches
+    |> Enum.map_join("\n", fn {expectation, {_matches?, _matching, mismatches, _vars}} ->
+      title =
+        if expectation.stacktrace do
+          {file, line, _mod} = expectation.stacktrace
+          "#{file}:#{line}"
+        end
+
+      """
+      * #{title}
+        Mismatches: #{Enum.map_join(mismatches, ", ", &to_string/1)}
+      """
     end)
   end
 end
