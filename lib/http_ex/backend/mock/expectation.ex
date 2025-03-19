@@ -377,10 +377,10 @@ defmodule HTTPEx.Backend.Mock.Expectation do
       %Expectation{expects: %{body: "ok!", headers: :any, path: :any, query: :any}}
 
       iex> Expectation.set_expect!(%Expectation{}, :body, nil)
-      ** (ArgumentError) Invalid type used for expects field `body`
+      ** (ArgumentError) Invalid type used for field expectation `body`. Must be one of: `function()`, `String.t()`, `{String.t(), atom()}`, `RegEx.t()`, `:any`, `{:exact_value, any()}`
 
       iex> Expectation.set_expect!(%Expectation{}, :unknown, nil)
-      ** (ArgumentError) Unknown expects field `unknown`
+      ** (ArgumentError) Unknown field `unknown` for expectation
 
   """
   @spec set_expect!(Expectation.t(), atom(), matcher()) :: Expectation.t()
@@ -390,10 +390,16 @@ defmodule HTTPEx.Backend.Mock.Expectation do
         %{expectation | expects: Map.put(expectation.expects, field, value)}
 
       {:error, :unknown_field} ->
-        raise ArgumentError, "Unknown expects field `#{field}`"
+        raise ArgumentError, "Unknown field `#{field}` for expectation"
 
       {:error, :invalid_field_type} ->
-        raise ArgumentError, "Invalid type used for expects field `#{field}`"
+        expected_types =
+          Enum.map_join(@expects_fields[field], ", ", fn type ->
+            "`#{type_to_string(type)}`"
+          end)
+
+        raise ArgumentError,
+              "Invalid type used for field expectation `#{field}`. Must be one of: #{expected_types}"
     end
   end
 
@@ -1194,4 +1200,11 @@ defmodule HTTPEx.Backend.Mock.Expectation do
 
   defp validate_response_option!(_),
     do: raise(ArgumentError, "Invalid response given to expectation")
+
+  defp type_to_string(:func), do: "function()"
+  defp type_to_string(:string), do: "String.t()"
+  defp type_to_string(:string_with_format), do: "{String.t(), atom()}"
+  defp type_to_string(:regex), do: "RegEx.t()"
+  defp type_to_string(:wildcard), do: ":any"
+  defp type_to_string(:exact_value), do: "{:exact_value, any()}"
 end
