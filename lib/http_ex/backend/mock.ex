@@ -206,7 +206,9 @@ defmodule HTTPEx.Backend.Mock do
   @spec expect_request!(Keyword.t()) :: :ok | {:error, atom()}
   def expect_request!(opts) when is_list(opts) do
     expectation =
-      Expectation.new!(Keyword.merge(opts, type: :assert, stacktrace: expectation_stacktrace()))
+      opts
+      |> Keyword.put(:type, :assert)
+      |> Expectation.new!()
 
     add!(@local_server, expectation)
   end
@@ -225,7 +227,7 @@ defmodule HTTPEx.Backend.Mock do
   def assert_no_request!(opts) when is_list(opts) do
     expectation =
       opts
-      |> Keyword.merge(type: :reject, stacktrace: expectation_stacktrace())
+      |> Keyword.put(:type, :reject)
       |> Expectation.new!()
 
     add!(@local_server, expectation)
@@ -249,7 +251,9 @@ defmodule HTTPEx.Backend.Mock do
   """
   def stub_request!(opts) when is_list(opts) do
     expectation =
-      Expectation.new!(Keyword.merge(opts, type: :stub, stacktrace: expectation_stacktrace()))
+      opts
+      |> Keyword.put(:type, :stub)
+      |> Expectation.new!()
 
     server = if Keyword.get(opts, :global), do: @global_server, else: @local_server
     add!(server, expectation)
@@ -446,12 +450,6 @@ defmodule HTTPEx.Backend.Mock do
 
   defp parse_body(%Request{} = request), do: request
 
-  defp expectation_stacktrace do
-    {_, stacktrace} = Process.info(self(), :current_stacktrace)
-
-    Enum.at(stacktrace, 3)
-  end
-
   defp registered_expectations_summary(server, owner_pid) do
     server
     |> list(owner_pid)
@@ -459,7 +457,7 @@ defmodule HTTPEx.Backend.Mock do
       expectation.max_calls == :infinity || expectation.calls < expectation.max_calls
     end)
     |> Enum.map_join("\n", fn expectation ->
-      "* #{Exception.format_stacktrace_entry(expectation.stacktrace)}"
+      Expectation.summary(expectation)
     end)
   end
 end
