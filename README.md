@@ -4,7 +4,7 @@ HttpEx is an Elixir HTTP abstraction library to easily log, trace and mock your 
 
 Note: work in progress. Things to come:
 
-* Add support for different HTTP clients
+* Add support for different HTTP clients (HTTPoison, Finch)
 * Add support for different tracing backends (currently only supports OpenTelemetry)
 * Add support for different logger backends
 

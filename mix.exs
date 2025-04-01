@@ -5,6 +5,7 @@ defmodule HttpEx.MixProject do
     [
       app: :http_ex,
       deps: deps(),
+      description: "Abstract HTTP library with unique mocking capabilities",
       dialyzer: dialyzer_config(),
       docs: docs(),
       elixir: "~> 1.18",
