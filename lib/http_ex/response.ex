@@ -64,9 +64,7 @@ defmodule HTTPEx.Response do
   # In case of PDF's that are retrieved, we may have to parse them to binary
   # before interpolating them.
   defp safe_to_string(string) do
-    String.to_charlist(string)
-
-    string
+    string |> String.to_charlist() |> to_string()
   rescue
     UnicodeConversionError -> :unicode.characters_to_binary(string, :latin1)
   end

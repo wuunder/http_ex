@@ -21,6 +21,16 @@ defmodule HTTPExTest do
       {:ok, %HTTPoison.Response{status_code: 200, body: "OK!"}}
     end
 
+    def request(%Request{method: :get, url: "http://www.example.com/pdf.pdf"} = request) do
+      assert request.headers == []
+
+      {:ok,
+       %HTTPoison.Response{
+         status_code: 200,
+         body: "%PDF-1.4\n%ÓôÌá\n1 0 obj\n<<\n/CreationDate(D:2025040"
+       }}
+    end
+
     def request(%Request{method: :get, url: "http://www.example.com/redirect"} = request) do
       assert request.headers == []
       {:ok, %HTTPoison.Response{status_code: 302, body: "You are being redirected"}}
@@ -96,6 +106,19 @@ defmodule HTTPExTest do
                {:ok,
                 %HTTPEx.Response{
                   body: "OK!",
+                  client: :httpoison,
+                  retries: 1,
+                  status: 200,
+                  parsed_body: nil,
+                  headers: []
+                }}
+    end
+
+    test "OK with pdf as response" do
+      assert HTTPEx.get("http://www.example.com/pdf.pdf", backend: MockBackend) ==
+               {:ok,
+                %HTTPEx.Response{
+                  body: "%PDF-1.4\n%ÓôÌá\n1 0 obj\n<<\n/CreationDate(D:2025040",
                   client: :httpoison,
                   retries: 1,
                   status: 200,
