@@ -32,7 +32,7 @@ defmodule HTTPEx.Response do
 
     #{Shared.attr("Body")}
 
-    #{Shared.value(response.body)}
+    #{Shared.value(safe_to_string(response.body))}
     """
   end
 
@@ -59,5 +59,15 @@ defmodule HTTPEx.Response do
       {"http.status_code", response.status},
       {"http.retries", response.retries}
     ])
+  end
+
+  # In case of PDF's that are retrieved, we may have to parse them to binary
+  # before interpolating them.
+  defp safe_to_string(string) do
+    String.to_charlist(string)
+
+    string
+  rescue
+    UnicodeConversionError -> :unicode.characters_to_binary(string, :latin1)
   end
 end
