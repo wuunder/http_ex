@@ -7,6 +7,9 @@ defmodule HTTPExTest do
   alias HTTPEx.Response
   alias HTTPExTest.MockBackend
 
+  import ExUnit.CaptureLog
+  require Logger
+
   doctest HTTPEx
 
   defmodule MockBackend do
@@ -101,6 +104,16 @@ defmodule HTTPExTest do
   end
 
   describe "get/2" do
+    setup do
+      log_fn = Application.get_env(:http_ex, :log)
+
+      on_exit(fn ->
+        Application.put_env(:http_ex, :log, log_fn)
+      end)
+
+      :ok
+    end
+
     test "OK" do
       assert HTTPEx.get("http://www.example.com", backend: MockBackend) ==
                {:ok,
@@ -115,7 +128,17 @@ defmodule HTTPExTest do
     end
 
     test "OK with pdf as response" do
-      assert HTTPEx.get("http://www.example.com/pdf.pdf", backend: MockBackend) ==
+      Application.put_env(:http_ex, :log, &Logger.info/1)
+
+      {result, log} =
+        with_log(fn ->
+          HTTPEx.get("http://www.example.com/pdf.pdf", backend: MockBackend)
+        end)
+
+      assert log =~
+               "\e[4mHTTP response:\e[24m\n\n\e[1mClient:\e[22m \e[3m:httpoison\e[23m\n\e[1mStatus:\e[22m \e[3m200\e[23m\n\e[1mRetries:\e[22m \e[3m1\e[23m\n\e[1mHeaders:\e[22m\n\n\e[3m[]\e[23m\n\n\e[1mBody:\e[22m\n\n\e[3m%PDF-1.4\n%ÓôÌá\n1 0 obj\n<<\n/CreationDate(D:2025040\e[23m\n\n\e[0m"
+
+      assert result ==
                {:ok,
                 %HTTPEx.Response{
                   body: "%PDF-1.4\n%ÓôÌá\n1 0 obj\n<<\n/CreationDate(D:2025040",
