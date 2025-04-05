@@ -136,7 +136,7 @@ defmodule HTTPExTest do
         end)
 
       assert log =~
-               ~s(\e[4mHTTP response:\e[24m\n\n\e[1mClient:\e[22m \e[3m:httpoison\e[23m\n\e[1mStatus:\e[22m \e[3m200\e[23m\n\e[1mRetries:\e[22m \e[3m1\e[23m\n\e[1mHeaders:\e[22m\n\n\e[3m[]\e[23m\n\n\e[1mBody:\e[22m\n\n\e[3m%PDF-1.4\n%ÓôÌá\n1 0 obj\n<<\n/CreationDate(D:2025040\e[23m\n\n\e[0m)
+               ~s(\e[4mHTTP response:\e[24m\n\n\e[1mClient:\e[22m \e[3m:httpoison\e[23m\n\e[1mStatus:\e[22m \e[3m200\e[23m\n\e[1mRetries:\e[22m \e[3m1\e[23m\n\e[1mHeaders:\e[22m\n\n\e[3m[]\e[23m\n\n\e[1mBody:\e[22m\n\n\e[3m%PDF-1.4\n%ÓôÌá\n1 0 obj\n<<\n/CreationDate(D:2025040\e)
 
       assert result ==
                {:ok,
