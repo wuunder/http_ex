@@ -1046,18 +1046,21 @@ defmodule HTTPEx.Backend.Mock.Expectation do
 
   defp match_value(:string_with_format, {matcher, :json}, value_to_match)
        when is_binary(matcher) and is_binary(value_to_match) do
-    match_left_right(
-      JSON.normalize(matcher),
-      JSON.normalize(value_to_match)
-    )
+    with {false, _, _} <-
+           match_left_right(JSON.normalize(matcher), JSON.normalize(value_to_match)) do
+      {false, matcher, value_to_match}
+    end
   end
 
   defp match_value(:string_with_format, {matcher, :xml}, value_to_match)
        when is_binary(matcher) and is_binary(value_to_match) do
-    match_left_right(
-      XML.normalize(matcher),
-      XML.normalize(value_to_match)
-    )
+    with {false, _, _} <-
+           match_left_right(
+             XML.normalize(matcher),
+             XML.normalize(value_to_match)
+           ) do
+      {false, matcher, value_to_match}
+    end
   end
 
   defp match_value(:string_with_format, {matcher, :form}, value_to_match)
