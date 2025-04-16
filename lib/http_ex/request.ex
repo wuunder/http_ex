@@ -12,6 +12,7 @@ defmodule HTTPEx.Request do
   @default_retry_timeout 2000
 
   @enforce_keys [:method, :url]
+  @derive JSON.Encoder
   defstruct body: "",
             client: nil,
             headers: [],

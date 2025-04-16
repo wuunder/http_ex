@@ -5,6 +5,7 @@ defmodule HTTPEx.Error do
   alias __MODULE__
   alias HTTPEx.Shared
 
+  @derive JSON.Encoder
   defstruct body: nil,
             client: nil,
             headers: nil,

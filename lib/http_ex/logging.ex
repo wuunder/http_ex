@@ -18,11 +18,16 @@ defmodule HTTPEx.Logging do
       |> Tracing.set_attributes()
     end
 
+    if export_logging?() do
+      export_log_fn().(entity)
+    end
+
     entity
   end
 
   def trace({_, entity} = result) do
     trace(entity)
+
     result
   end
 
@@ -50,8 +55,8 @@ defmodule HTTPEx.Logging do
   end
 
   defp log_fn, do: Shared.config(:log)
-
   defp logging?, do: not is_nil(log_fn())
-
   defp tracing?, do: Shared.config(:open_telemetry)
+  defp export_log_fn, do: Shared.config(:export_logging)
+  defp export_logging?, do: not is_nil(export_log_fn())
 end
