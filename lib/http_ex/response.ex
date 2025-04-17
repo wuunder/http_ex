@@ -6,6 +6,7 @@ defmodule HTTPEx.Response do
   alias HTTPEx.Shared
   alias Plug.Conn.Status
 
+  @derive JSON.Encoder
   defstruct body: nil, client: nil, retries: 0, status: nil, parsed_body: nil, headers: nil
 
   @type t :: %__MODULE__{
