@@ -3,10 +3,7 @@ defmodule HTTPEx.LoggingTest do
 
   alias HTTPExTest.MockBackend
 
-  import ExUnit.CaptureLog
-  require Logger
-
-  describe "" do
+  describe "export_logging" do
     setup do
       log_fn = Application.get_env(:http_ex, :export_logging)
 
@@ -18,32 +15,64 @@ defmodule HTTPEx.LoggingTest do
     end
 
     test "export logging when function is available" do
-      Application.put_env(:http_ex, :export_logging, &Logger.info/1)
+      {:ok, pid} = Agent.start_link(fn -> [] end)
 
-      {result, log} =
-        with_log(fn ->
-          HTTPEx.get("http://www.example.com", backend: MockBackend)
-        end)
+      Application.put_env(:http_ex, :export_logging, fn x -> Agent.update(pid, &[x | &1]) end)
 
-      assert log =~
-               ~s([info] [options: [pool: HTTPEx.FinchTestPool, retry_status_codes: [500, 502, 503, 504], retry_error_codes: [:closed, :timeout], transport_max_retries: 3, transport_retry_timeout: 2000, allow_redirects: true, backend: HTTPExTest.MockBackend], __struct__: HTTPEx.Request, body: \"\", url: \"http://www.example.com\", client: :httpoison, headers: [], retries: 1, method: :get)
+      HTTPEx.get("http://www.example.com", backend: MockBackend)
 
-      assert log =~
-               ~s([info] [options: [pool: HTTPEx.FinchTestPool, retry_status_codes: [500, 502, 503, 504], retry_error_codes: [:closed, :timeout], transport_max_retries: 3, transport_retry_timeout: 2000, allow_redirects: true, backend: HTTPExTest.MockBackend], __struct__: HTTPEx.Request, body: \"\", url: \"http://www.example.com\", client: :httpoison, headers: [], retries: 1, method: :get)
-
-      assert log =~
-               ~s([info] [status: 200, __struct__: HTTPEx.Response, body: \"OK!\", client: :httpoison, headers: [], parsed_body: nil, retries: 1])
-
-      assert result ==
-               {:ok,
-                %HTTPEx.Response{
-                  body: "OK!",
-                  client: :httpoison,
-                  headers: [],
-                  parsed_body: nil,
-                  retries: 1,
-                  status: 200
-                }}
+      assert [
+               %HTTPEx.Response{
+                 status: 200,
+                 body: "OK!",
+                 client: :httpoison,
+                 headers: [],
+                 retries: 1,
+                 parsed_body: nil
+               },
+               %HTTPEx.Response{
+                 status: 200,
+                 body: "OK!",
+                 client: :httpoison,
+                 headers: [],
+                 retries: 1,
+                 parsed_body: nil
+               },
+               %HTTPEx.Request{
+                 options: [
+                   pool: HTTPEx.FinchTestPool,
+                   retry_status_codes: [500, 502, 503, 504],
+                   retry_error_codes: [:closed, :timeout],
+                   transport_max_retries: 3,
+                   transport_retry_timeout: 2000,
+                   allow_redirects: true,
+                   backend: HTTPExTest.MockBackend
+                 ],
+                 body: "",
+                 url: "http://www.example.com",
+                 client: :httpoison,
+                 headers: [],
+                 method: :get,
+                 retries: 1
+               },
+               %HTTPEx.Request{
+                 options: [
+                   pool: HTTPEx.FinchTestPool,
+                   retry_status_codes: [500, 502, 503, 504],
+                   retry_error_codes: [:closed, :timeout],
+                   transport_max_retries: 3,
+                   transport_retry_timeout: 2000,
+                   allow_redirects: true,
+                   backend: HTTPExTest.MockBackend
+                 ],
+                 body: "",
+                 url: "http://www.example.com",
+                 client: :httpoison,
+                 headers: [],
+                 method: :get,
+                 retries: 1
+               }
+             ] = Agent.get(pid, & &1)
     end
   end
 end

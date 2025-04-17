@@ -37,7 +37,7 @@ defmodule HTTPExTest do
     end
 
     test "OK with pdf as response" do
-      Application.put_env(:http_ex, :log, &Logger.info/1)
+      Application.put_env(:http_ex, :log, fn x -> Logger.bare_log(:info, x) end)
 
       {result, log} =
         with_log(fn ->
