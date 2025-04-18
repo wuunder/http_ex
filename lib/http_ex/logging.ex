@@ -18,10 +18,6 @@ defmodule HTTPEx.Logging do
       |> Tracing.set_attributes()
     end
 
-    if export_logging?() do
-      export_log_fn().(entity)
-    end
-
     entity
   end
 
@@ -44,6 +40,10 @@ defmodule HTTPEx.Logging do
   def log(%module{} = entity) do
     if logging?() do
       log_fn().(module.summary(entity))
+    end
+
+    if export_logging?() do
+      export_log_fn().(entity)
     end
 
     entity

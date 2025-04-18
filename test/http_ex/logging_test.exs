@@ -30,31 +30,6 @@ defmodule HTTPEx.LoggingTest do
                  retries: 1,
                  parsed_body: nil
                },
-               %HTTPEx.Response{
-                 status: 200,
-                 body: "OK!",
-                 client: :httpoison,
-                 headers: [],
-                 retries: 1,
-                 parsed_body: nil
-               },
-               %HTTPEx.Request{
-                 options: [
-                   pool: HTTPEx.FinchTestPool,
-                   retry_status_codes: [500, 502, 503, 504],
-                   retry_error_codes: [:closed, :timeout],
-                   transport_max_retries: 3,
-                   transport_retry_timeout: 2000,
-                   allow_redirects: true,
-                   backend: HTTPExTest.MockBackend
-                 ],
-                 body: "",
-                 url: "http://www.example.com",
-                 client: :httpoison,
-                 headers: [],
-                 method: :get,
-                 retries: 1
-               },
                %HTTPEx.Request{
                  options: [
                    pool: HTTPEx.FinchTestPool,
