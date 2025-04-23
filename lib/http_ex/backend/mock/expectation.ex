@@ -2,9 +2,6 @@ defmodule HTTPEx.Backend.Mock.Expectation do
   @moduledoc """
   Defines a HTTP mock expectation.
   Consists of a matching part and an expectation part.
-
-  TODO add support for multipart form key/value matchers
-  TODO add support for form key/value matchers
   """
   @behaviour HTTPEx.Traceable
 
