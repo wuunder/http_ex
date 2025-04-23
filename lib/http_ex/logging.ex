@@ -1,8 +1,6 @@
 defmodule HTTPEx.Logging do
   @moduledoc """
   Handles all the HTTP logging and tracing
-
-  TODO: abstract logging to a macro
   """
 
   use Tracing
