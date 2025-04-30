@@ -56,37 +56,41 @@ defmodule HTTPEx.Clients.HTTPoison do
     quote do
       if Code.ensure_loaded?(HTTPoison) do
         def to_response(
-              {:ok, %HTTPoison.Response{status_code: status, body: body, headers: headers}},
+              {:ok, %HTTPoison.Response{status_code: status, body: body, headers: headers} = response},
               retries
             )
-            when status < 400,
-            do:
-              {:ok,
-               %HTTPEx.Response{
-                 client: :httpoison,
-                 status: status,
-                 body: body,
-                 parsed_body: parse_body(body),
-                 headers: headers,
-                 retries: retries
-               }}
+            when status < 400 do
+          body = decompress_body(response)
+
+          {:ok,
+           %HTTPEx.Response{
+             client: :httpoison,
+             status: status,
+             body: body,
+             parsed_body: parse_body(body),
+             headers: headers,
+             retries: retries
+           }}
+        end
 
         def to_response(
-              {:ok, %HTTPoison.Response{status_code: status, body: body, headers: headers}},
+              {:ok, %HTTPoison.Response{status_code: status, body: body, headers: headers} = response},
               retries
             )
-            when status >= 400,
-            do:
-              {:error,
-               %HTTPEx.Error{
-                 client: :httpoison,
-                 reason: Plug.Conn.Status.reason_atom(status),
-                 status: status,
-                 body: body,
-                 parsed_body: parse_body(body),
-                 headers: headers,
-                 retries: retries
-               }}
+            when status >= 400 do
+          body = decompress_body(response)
+
+          {:error,
+           %HTTPEx.Error{
+             client: :httpoison,
+             reason: Plug.Conn.Status.reason_atom(status),
+             status: status,
+             body: body,
+             parsed_body: parse_body(body),
+             headers: headers,
+             retries: retries
+           }}
+        end
 
         # httpoison error
         def to_response({:error, %HTTPoison.Error{} = error}, retries),
