@@ -1,6 +1,12 @@
 # Changelog
 
-## v0.2 (2025-03-03)
+## v0.2.1 (2025-04-30)
+
+### Bug Fixes
+
+- Unzip the body when the content-encoding states is gzipped for the client httpoison
+
+## v0.2 (2025-04-23)
 
 ### Bug Fixes
 

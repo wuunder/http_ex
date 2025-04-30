@@ -56,7 +56,8 @@ defmodule HTTPEx.Clients.HTTPoison do
     quote do
       if Code.ensure_loaded?(HTTPoison) do
         def to_response(
-              {:ok, %HTTPoison.Response{status_code: status, body: body, headers: headers} = response},
+              {:ok,
+               %HTTPoison.Response{status_code: status, body: body, headers: headers} = response},
               retries
             )
             when status < 400 do
@@ -74,7 +75,8 @@ defmodule HTTPEx.Clients.HTTPoison do
         end
 
         def to_response(
-              {:ok, %HTTPoison.Response{status_code: status, body: body, headers: headers} = response},
+              {:ok,
+               %HTTPoison.Response{status_code: status, body: body, headers: headers} = response},
               retries
             )
             when status >= 400 do
