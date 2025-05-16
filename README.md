@@ -13,7 +13,7 @@ by adding `http_ex` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:http_ex, "~> 0.2.1"}
+    {:http_ex, "~> 0.2.2"}
   ]
 end
 ```
