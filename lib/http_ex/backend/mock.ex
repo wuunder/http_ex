@@ -109,6 +109,27 @@ defmodule HTTPEx.Backend.Mock do
     end
   end
 
+  @allwed_expect_request_options [
+    :body,
+    :body_format,
+    :description,
+    :expect_body,
+    :expect_body_format,
+    :expect_headers,
+    :expect_path,
+    :expect_query,
+    :headers,
+    :host,
+    :endpoint,
+    :min_calls,
+    :max_calls,
+    :method,
+    :path,
+    :port,
+    :query,
+    :response
+  ]
+
   @doc """
   Adds an asserted request. It will require a match always on `endpoint`, `method` and (optional) `caller`.
   If you try to add an expected request that already exists, this function will throw an exception.
@@ -205,6 +226,8 @@ defmodule HTTPEx.Backend.Mock do
   """
   @spec expect_request!(Keyword.t()) :: :ok | {:error, atom()}
   def expect_request!(opts) when is_list(opts) do
+    validate_options(opts)
+
     expectation =
       opts
       |> Keyword.put(:type, :assert)
@@ -491,5 +514,16 @@ defmodule HTTPEx.Backend.Mock do
         Mismatches: #{Enum.map_join(mismatches, ", ", &to_string/1)}
       """
     end)
+  end
+
+  defp validate_options(options) do
+    option_keys = Keyword.keys(options)
+
+    if option_keys -- @allwed_expect_request_options != [] do
+      disallowed_options = option_keys -- @allwed_expect_request_options
+
+      raise ArgumentError,
+            "The option(s) '#{disallowed_options |> Enum.join(", ")}' are not allowed"
+    end
   end
 end
