@@ -186,7 +186,10 @@ defmodule HTTPEx.Backend.Mock.Expectation do
       case type do
         :stub -> {0, :infinity}
         :reject -> {0, 0}
-        :assert -> {1, Keyword.get(opts, :calls, 1)}
+        :assert ->
+          min = Keyword.get(opts, :min_calls, 1)
+          max = Keyword.get(opts, :max_calls, Keyword.get(opts, :calls, 1))
+          {min, max}
       end
 
     expectation_type =

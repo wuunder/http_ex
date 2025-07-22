@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.2.3 (2025-07-22)
+
+### Bug Fixes
+
+- Fixed `max_calls` and `min_calls` options not being respected in `expect_request!`
+
 ## v0.2.2 (2025-04-30)
 
 ### Bug Fixes
