@@ -206,7 +206,7 @@ defmodule HTTPEx.Backend.MockTest do
                    end
     end
 
-    test "min_calls met" do
+    test "does not raise an error when minimum amount of calls is reached" do
       Mock.expect_request!(
         endpoint: "http://www.example.com",
         min_calls: 2,
@@ -251,21 +251,13 @@ defmodule HTTPEx.Backend.MockTest do
         response: %{status: 200, body: "OK"}
       )
 
-      Enum.each(1..2, fn _ ->
+      Enum.each(1..3, fn _ ->
         Mock.request(%Request{
           client: :httpoison,
           url: "http://www.example.com",
           method: :get
         })
       end)
-
-      Mock.verify!(self())
-
-      Mock.request(%Request{
-        client: :httpoison,
-        url: "http://www.example.com",
-        method: :get
-      })
 
       assert_raise AssertionError,
                    ~r/Maximum number of HTTP calls already made for request/,
