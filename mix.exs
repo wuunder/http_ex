@@ -16,7 +16,7 @@ defmodule HttpEx.MixProject do
       source_url: "https://github.com/wuunder/http_ex",
       start_permanent: Mix.env() == :prod,
       test_coverage: [tool: ExCoveralls],
-      version: "0.2.2"
+      version: "0.2.3"
     ]
   end
 

@@ -112,6 +112,7 @@ defmodule HTTPEx.Backend.Mock do
   @allwed_expect_request_options [
     :body,
     :body_format,
+    :calls,
     :description,
     :expect_body,
     :expect_body_format,
