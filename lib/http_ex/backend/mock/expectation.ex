@@ -169,7 +169,8 @@ defmodule HTTPEx.Backend.Mock.Expectation do
   - expect_headers
   - expect_path
   - expect_query
-  - calls
+  - min_calls
+  - max_calls
   - stacktrace
 
   ## Examples
@@ -184,11 +185,27 @@ defmodule HTTPEx.Backend.Mock.Expectation do
 
     {min_calls, max_calls} =
       case type do
-        :stub -> {0, :infinity}
-        :reject -> {0, 0}
+        :stub ->
+          {0, :infinity}
+
+        :reject ->
+          {0, 0}
+
         :assert ->
           min = Keyword.get(opts, :min_calls, 1)
-          max = Keyword.get(opts, :max_calls, Keyword.get(opts, :calls, 1))
+
+          max =
+            cond do
+              Keyword.has_key?(opts, :max_calls) ->
+                Keyword.get(opts, :max_calls)
+
+              Keyword.has_key?(opts, :min_calls) ->
+                :infinity
+
+              true ->
+                1
+            end
+
           {min, max}
       end
 

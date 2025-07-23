@@ -183,5 +183,124 @@ defmodule HTTPEx.Backend.MockTest do
                      Mock.verify!(self())
                    end
     end
+
+    test "min_calls not met" do
+      Mock.expect_request!(
+        endpoint: "http://www.example.com",
+        expect_body: "GET",
+        min_calls: 3,
+        response: %{status: 200, body: "OK"}
+      )
+
+      Mock.request(%Request{
+        client: :httpoison,
+        url: "http://www.example.com",
+        method: :get,
+        body: "GET"
+      })
+
+      Mock.request(%Request{
+        client: :httpoison,
+        url: "http://www.example.com",
+        method: :get,
+        body: "GET"
+      })
+
+      assert_raise AssertionError,
+                   ~r/An expected HTTP call was called 2 but was expected to be called 3 times/,
+                   fn ->
+                     Mock.verify!(self())
+                   end
+    end
+
+    test "min_calls met" do
+      Mock.expect_request!(
+        endpoint: "http://www.example.com",
+        expect_body: "GET",
+        min_calls: 2,
+        response: %{status: 200, body: "OK"}
+      )
+
+      Mock.request(%Request{
+        client: :httpoison,
+        url: "http://www.example.com",
+        method: :get,
+        body: "GET"
+      })
+
+      Mock.request(%Request{
+        client: :httpoison,
+        url: "http://www.example.com",
+        method: :get,
+        body: "GET"
+      })
+
+      Mock.verify!(self())
+    end
+
+    test "min_calls with max_calls met" do
+      Mock.expect_request!(
+        endpoint: "http://www.example.com",
+        expect_body: "GET",
+        min_calls: 1,
+        max_calls: 5,
+        response: %{status: 200, body: "OK"}
+      )
+
+      Enum.each(1..3, fn _ ->
+        Mock.request(%Request{
+          client: :httpoison,
+          url: "http://www.example.com",
+          method: :get,
+          body: "GET"
+        })
+      end)
+
+      Mock.verify!(self())
+    end
+
+    test "both min_calls met, max_calls met and then exceeded" do
+      Mock.expect_request!(
+        endpoint: "http://www.example.com",
+        expect_body: "GET",
+        min_calls: 2,
+        max_calls: 3,
+        response: %{status: 200, body: "OK"}
+      )
+
+      Mock.request(%Request{
+        client: :httpoison,
+        url: "http://www.example.com",
+        method: :get,
+        body: "GET"
+      })
+
+      Mock.request(%Request{
+        client: :httpoison,
+        url: "http://www.example.com",
+        method: :get,
+        body: "GET"
+      })
+
+      Mock.verify!(self())
+
+      Mock.request(%Request{
+        client: :httpoison,
+        url: "http://www.example.com",
+        method: :get,
+        body: "GET"
+      })
+
+      assert_raise AssertionError,
+                   ~r/Maximum number of HTTP calls already made for request/,
+                   fn ->
+                     Mock.request(%Request{
+                       client: :httpoison,
+                       url: "http://www.example.com",
+                       method: :get,
+                       body: "GET"
+                     })
+                   end
+    end
   end
 end
