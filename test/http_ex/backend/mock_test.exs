@@ -183,5 +183,76 @@ defmodule HTTPEx.Backend.MockTest do
                      Mock.verify!(self())
                    end
     end
+
+    test "backward compatibility with calls option" do
+      Mock.expect_request!(
+        endpoint: "http://www.example.com",
+        expect_body: "GET",
+        calls: 2,
+        response: %{status: 200, body: "OK"}
+      )
+
+      Mock.request(%Request{
+        client: :httpoison,
+        url: "http://www.example.com",
+        method: :get,
+        body: "GET"
+      })
+
+      Mock.request(%Request{
+        client: :httpoison,
+        url: "http://www.example.com",
+        method: :get,
+        body: "GET"
+      })
+
+      Mock.verify!(self())
+
+      assert_raise AssertionError,
+                   ~r/Maximum number of HTTP calls already made for request/,
+                   fn ->
+                     Mock.request(%Request{
+                       client: :httpoison,
+                       url: "http://www.example.com",
+                       method: :get,
+                       body: "GET"
+                     })
+                   end
+    end
+
+    test "max_calls takes precedence over calls option" do
+      Mock.expect_request!(
+        endpoint: "http://www.example.com",
+        expect_body: "GET",
+        calls: 5,
+        max_calls: 2,
+        response: %{status: 200, body: "OK"}
+      )
+
+      Mock.request(%Request{
+        client: :httpoison,
+        url: "http://www.example.com",
+        method: :get,
+        body: "GET"
+      })
+
+      Mock.request(%Request{
+        client: :httpoison,
+        url: "http://www.example.com",
+        method: :get,
+        body: "GET"
+      })
+
+      assert_raise AssertionError,
+                   ~r/Maximum number of HTTP calls already made for request/,
+                   fn ->
+                     Mock.request(%Request{
+                       client: :httpoison,
+                       url: "http://www.example.com",
+                       method: :get,
+                       body: "GET"
+                     })
+                   end
+    end
   end
 end
