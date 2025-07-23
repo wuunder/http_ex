@@ -224,7 +224,7 @@ defmodule HTTPEx.Backend.MockTest do
       Mock.verify!(self())
     end
 
-    test "min_calls with max_calls met" do
+    test "does not raise an error with the accepted amount of requests" do
       Mock.expect_request!(
         endpoint: "http://www.example.com",
         min_calls: 1,
