@@ -112,7 +112,6 @@ defmodule HTTPEx.Backend.Mock do
   @allwed_expect_request_options [
     :body,
     :body_format,
-    :calls,
     :description,
     :expect_body,
     :expect_body_format,
@@ -186,10 +185,6 @@ defmodule HTTPEx.Backend.Mock do
 
   * `endpoint` -
     The request URL that is to be matched when an HTTP call is made.
-
-  * `calls` number() | nil (default 1) -
-    Sets both the minimum and maximum number of calls (legacy option).
-    Use `min_calls` and `max_calls` for more flexible control.
 
   * `min_calls` number() | nil (default 1) -
     Sets the minimum number of calls that are allowed.
