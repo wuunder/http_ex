@@ -193,18 +193,7 @@ defmodule HTTPEx.Backend.Mock.Expectation do
 
         :assert ->
           min = Keyword.get(opts, :min_calls, 1)
-
-          max =
-            cond do
-              Keyword.has_key?(opts, :max_calls) ->
-                Keyword.get(opts, :max_calls)
-
-              Keyword.has_key?(opts, :min_calls) ->
-                :infinity
-
-              true ->
-                1
-            end
+          max = Keyword.get(opts, :max_calls) || Keyword.get(opts, :calls, min)
 
           {min, max}
       end

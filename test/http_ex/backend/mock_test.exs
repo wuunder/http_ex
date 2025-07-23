@@ -184,27 +184,20 @@ defmodule HTTPEx.Backend.MockTest do
                    end
     end
 
-    test "min_calls not met" do
+    test "raise when less requests than min_calls expects are made" do
       Mock.expect_request!(
         endpoint: "http://www.example.com",
-        expect_body: "GET",
         min_calls: 3,
         response: %{status: 200, body: "OK"}
       )
 
-      Mock.request(%Request{
-        client: :httpoison,
-        url: "http://www.example.com",
-        method: :get,
-        body: "GET"
-      })
-
-      Mock.request(%Request{
-        client: :httpoison,
-        url: "http://www.example.com",
-        method: :get,
-        body: "GET"
-      })
+      Enum.each(1..2, fn _ ->
+        Mock.request(%Request{
+          client: :httpoison,
+          url: "http://www.example.com",
+          method: :get
+        })
+      end)
 
       assert_raise AssertionError,
                    ~r/An expected HTTP call was called 2 but was expected to be called 3 times/,
@@ -216,24 +209,17 @@ defmodule HTTPEx.Backend.MockTest do
     test "min_calls met" do
       Mock.expect_request!(
         endpoint: "http://www.example.com",
-        expect_body: "GET",
         min_calls: 2,
         response: %{status: 200, body: "OK"}
       )
 
-      Mock.request(%Request{
-        client: :httpoison,
-        url: "http://www.example.com",
-        method: :get,
-        body: "GET"
-      })
-
-      Mock.request(%Request{
-        client: :httpoison,
-        url: "http://www.example.com",
-        method: :get,
-        body: "GET"
-      })
+      Enum.each(1..2, fn _ ->
+        Mock.request(%Request{
+          client: :httpoison,
+          url: "http://www.example.com",
+          method: :get
+        })
+      end)
 
       Mock.verify!(self())
     end
@@ -241,7 +227,6 @@ defmodule HTTPEx.Backend.MockTest do
     test "min_calls with max_calls met" do
       Mock.expect_request!(
         endpoint: "http://www.example.com",
-        expect_body: "GET",
         min_calls: 1,
         max_calls: 5,
         response: %{status: 200, body: "OK"}
@@ -251,44 +236,35 @@ defmodule HTTPEx.Backend.MockTest do
         Mock.request(%Request{
           client: :httpoison,
           url: "http://www.example.com",
-          method: :get,
-          body: "GET"
+          method: :get
         })
       end)
 
       Mock.verify!(self())
     end
 
-    test "both min_calls met, max_calls met and then exceeded" do
+    test "raises when too many requests are made" do
       Mock.expect_request!(
         endpoint: "http://www.example.com",
-        expect_body: "GET",
         min_calls: 2,
         max_calls: 3,
         response: %{status: 200, body: "OK"}
       )
 
-      Mock.request(%Request{
-        client: :httpoison,
-        url: "http://www.example.com",
-        method: :get,
-        body: "GET"
-      })
-
-      Mock.request(%Request{
-        client: :httpoison,
-        url: "http://www.example.com",
-        method: :get,
-        body: "GET"
-      })
+      Enum.each(1..2, fn _ ->
+        Mock.request(%Request{
+          client: :httpoison,
+          url: "http://www.example.com",
+          method: :get
+        })
+      end)
 
       Mock.verify!(self())
 
       Mock.request(%Request{
         client: :httpoison,
         url: "http://www.example.com",
-        method: :get,
-        body: "GET"
+        method: :get
       })
 
       assert_raise AssertionError,
@@ -297,8 +273,60 @@ defmodule HTTPEx.Backend.MockTest do
                      Mock.request(%Request{
                        client: :httpoison,
                        url: "http://www.example.com",
-                       method: :get,
-                       body: "GET"
+                       method: :get
+                     })
+                   end
+    end
+
+    test "backward compatibility with calls option" do
+      Mock.expect_request!(
+        endpoint: "http://www.example.com",
+        calls: 2,
+        response: %{status: 200, body: "OK"}
+      )
+
+      Enum.each(1..2, fn _ ->
+        Mock.request(%Request{
+          client: :httpoison,
+          url: "http://www.example.com",
+          method: :get
+        })
+      end)
+
+      assert_raise AssertionError,
+                   ~r/Maximum number of HTTP calls already made for request/,
+                   fn ->
+                     Mock.request(%Request{
+                       client: :httpoison,
+                       url: "http://www.example.com",
+                       method: :get
+                     })
+                   end
+    end
+
+    test "max_calls takes precedence over calls option" do
+      Mock.expect_request!(
+        endpoint: "http://www.example.com",
+        calls: 5,
+        max_calls: 2,
+        response: %{status: 200, body: "OK"}
+      )
+
+      Enum.each(1..2, fn _ ->
+        Mock.request(%Request{
+          client: :httpoison,
+          url: "http://www.example.com",
+          method: :get
+        })
+      end)
+
+      assert_raise AssertionError,
+                   ~r/Maximum number of HTTP calls already made for request/,
+                   fn ->
+                     Mock.request(%Request{
+                       client: :httpoison,
+                       url: "http://www.example.com",
+                       method: :get
                      })
                    end
     end
