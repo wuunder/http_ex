@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.2.4 (2025-08-15)
+
+### Bug Fixes
+
+- Fixed `stacktrace`  option not being allowed in `expect_request!`
+
 ## v0.2.3 (2025-07-22)
 
 ### Bug Fixes
