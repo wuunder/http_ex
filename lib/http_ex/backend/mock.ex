@@ -109,11 +109,12 @@ defmodule HTTPEx.Backend.Mock do
     end
   end
 
-  @allwed_expect_request_options [
+  @allowed_expect_request_options [
     :body,
     :body_format,
     :calls,
     :description,
+    :endpoint,
     :expect_body,
     :expect_body_format,
     :expect_headers,
@@ -121,14 +122,14 @@ defmodule HTTPEx.Backend.Mock do
     :expect_query,
     :headers,
     :host,
-    :endpoint,
-    :min_calls,
     :max_calls,
     :method,
+    :min_calls,
     :path,
     :port,
     :query,
-    :response
+    :response,
+    :stacktrace
   ]
 
   @doc """
@@ -520,8 +521,8 @@ defmodule HTTPEx.Backend.Mock do
   defp validate_options(options) do
     option_keys = Keyword.keys(options)
 
-    if option_keys -- @allwed_expect_request_options != [] do
-      disallowed_options = option_keys -- @allwed_expect_request_options
+    if option_keys -- @allowed_expect_request_options != [] do
+      disallowed_options = option_keys -- @allowed_expect_request_options
 
       raise ArgumentError,
             "The option(s) '#{disallowed_options |> Enum.join(", ")}' are not allowed"
