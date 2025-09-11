@@ -122,6 +122,7 @@ defmodule HTTPEx.Backend.Mock do
     :expect_query,
     :headers,
     :host,
+    :http_client,
     :max_calls,
     :method,
     :min_calls,
