@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.2.5 (2025-08-15)
+
+### Bug Fixes
+
+- Fixed `http_client`  option not being allowed in `expect_request!`
+
 ## v0.2.4 (2025-08-15)
 
 ### Bug Fixes
