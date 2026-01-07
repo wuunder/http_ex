@@ -337,9 +337,11 @@ defmodule HTTPEx.Backend.Mock do
           left: left,
           right: right,
           message: """
-          The HTTP request that was made, didn't match an expectation
+          The HTTP request that was made, didn't match an expectation for the following request:
 
           #{Shared.attr("Field mismatch")} #{Shared.value(field)}
+
+          #{Request.summary(request)}
           """
 
       {:error, error} ->
