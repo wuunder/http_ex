@@ -88,6 +88,29 @@ defmodule HTTPEx.Backend.MockTest do
       end
     end
 
+    test "OK, using the same endpoint for multiple request but with different body's" do
+      Mock.expect_request!(
+        endpoint: "http://www.example.com/soap",
+        body: "can't find this one",
+        response: %{status: 200, body: "OK"}
+      )
+
+      Mock.expect_request!(
+        endpoint: "http://www.example.com/soap",
+        body: "find_this_one",
+        expect_body: "find_this_one",
+        response: %{status: 200, body: "OK"}
+      )
+
+      assert Mock.request(%Request{
+               client: :httpoison,
+               url: "http://www.example.com/soap",
+               method: :get,
+               body: "find_this_one"
+             }) ==
+               {:ok, %HTTPoison.Response{status_code: 200, body: "OK", headers: []}}
+    end
+
     test "max calls reached" do
       Mock.expect_request!(
         endpoint: "http://www.example.com",

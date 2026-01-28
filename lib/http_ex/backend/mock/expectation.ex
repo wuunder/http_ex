@@ -836,7 +836,8 @@ defmodule HTTPEx.Backend.Mock.Expectation do
         fn {expectation, match_result} ->
           {true, fields, _misses, _vars} = match_result
 
-          match_score = length(fields)
+          match_score =
+            fields |> Enum.reject(&(expectation.matchers[&1] == :any)) |> length()
 
           expects_calls? = expectation.type == :assertion && expectation.min_calls >= 1
 
