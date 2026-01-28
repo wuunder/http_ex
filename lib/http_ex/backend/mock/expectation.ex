@@ -770,10 +770,10 @@ defmodule HTTPEx.Backend.Mock.Expectation do
       ...>     }
       ...>   )
       ...>
-      ...> match == expectation_1
-      true
+      ...> match
+      expectation_2
       iex> vars
-      %{}
+      %{"api_version" => "v1"}
       iex> {:ok, match, vars} =
       ...>   Expectation.find_matching_expectation(
       ...>     expectations,
@@ -785,8 +785,8 @@ defmodule HTTPEx.Backend.Mock.Expectation do
       ...>     }
       ...>   )
       ...>
-      ...> match == expectation_1
-      true
+      ...> match
+      expectation_1
       iex> vars
       %{}
 
@@ -836,7 +836,8 @@ defmodule HTTPEx.Backend.Mock.Expectation do
         fn {expectation, match_result} ->
           {true, fields, _misses, _vars} = match_result
 
-          match_score = length(fields)
+          match_score =
+            fields |> Enum.reject(&(expectation.matchers[&1] == :any)) |> length()
 
           expects_calls? = expectation.type == :assertion && expectation.min_calls >= 1
 
