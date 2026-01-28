@@ -58,7 +58,7 @@ defmodule HTTPEx do
           parsed_body: %{"errors" => [%{"code" => "invalid_payload"}]},
           retries: 1,
           status: 422,
-          reason: :unprocessable_entity
+          reason: :unprocessable_content
         }
       }
 
