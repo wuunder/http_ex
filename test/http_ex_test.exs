@@ -137,7 +137,7 @@ defmodule HTTPExTest do
                   client: :httpoison,
                   headers: [],
                   parsed_body: %{"errors" => [%{"code" => "invalid_payload"}]},
-                  reason: :unprocessable_entity,
+                  reason: :unprocessable_content,
                   retries: 1,
                   status: 422
                 }}
@@ -154,7 +154,7 @@ defmodule HTTPExTest do
                   client: :httpoison,
                   headers: [],
                   parsed_body: %{"errors" => [%{"code" => "invalid_payload"}]},
-                  reason: :unprocessable_entity,
+                  reason: :unprocessable_content,
                   retries: 3,
                   status: 422
                 }}
@@ -284,7 +284,7 @@ defmodule HTTPExTest do
                   client: :httpoison,
                   headers: [],
                   parsed_body: %{"errors" => [%{"code" => "invalid_payload"}]},
-                  reason: :unprocessable_entity,
+                  reason: :unprocessable_content,
                   retries: 1,
                   status: 422
                 }}
@@ -301,7 +301,7 @@ defmodule HTTPExTest do
                   client: :httpoison,
                   headers: [],
                   parsed_body: %{"errors" => [%{"code" => "invalid_payload"}]},
-                  reason: :unprocessable_entity,
+                  reason: :unprocessable_content,
                   retries: 3,
                   status: 422
                 }}
