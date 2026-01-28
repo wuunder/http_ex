@@ -770,10 +770,10 @@ defmodule HTTPEx.Backend.Mock.Expectation do
       ...>     }
       ...>   )
       ...>
-      ...> match == expectation_1
-      true
+      ...> match
+      expectation_2
       iex> vars
-      %{}
+      %{"api_version" => "v1"}
       iex> {:ok, match, vars} =
       ...>   Expectation.find_matching_expectation(
       ...>     expectations,
@@ -785,8 +785,8 @@ defmodule HTTPEx.Backend.Mock.Expectation do
       ...>     }
       ...>   )
       ...>
-      ...> match == expectation_1
-      true
+      ...> match
+      expectation_1
       iex> vars
       %{}
 
