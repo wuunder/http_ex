@@ -55,7 +55,7 @@ defmodule HTTPEx.Response do
     Shared.trace_attrs([
       {"error", error?},
       {"http.error", reason},
-      {"http.response_body", response.body},
+      {"http.response_body", Shared.inspect_value(response.body)},
       {"http.response_headers", inspect(response.headers)},
       {"http.status_code", response.status},
       {"http.retries", response.retries}
