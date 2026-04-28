@@ -1,6 +1,12 @@
 # Changelog
 
-## v0.2.5 (2025-08-15)
+## v0.2.7 (2026-04-28)
+
+### Bug Fixes
+
+- Check if the response body is binary before tracing it with open telemetry.
+
+## v0.2.6 (2025-08-15)
 
 ### Bug Fixes
 
