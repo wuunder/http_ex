@@ -1,6 +1,11 @@
 # Changelog
 
 ## v0.2.7 (2026-04-28)
+### Bug Fixes
+
+- Handle Finch.TransportError and Finch.HTTPError.
+
+## v0.2.7 (2026-04-28)
 
 ### Bug Fixes
 

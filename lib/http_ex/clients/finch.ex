@@ -86,7 +86,13 @@ defmodule HTTPEx.Clients.Finch do
         def to_response({:error, %Mint.TransportError{} = error}, retries),
           do: {:error, %HTTPEx.Error{client: :finch, reason: error.reason, retries: retries}}
 
+        def to_response({:error, %Finch.TransportError{} = error}, retries),
+          do: {:error, %HTTPEx.Error{client: :finch, reason: error.reason, retries: retries}}
+
         def to_response({:error, %Mint.HTTPError{} = error}, retries),
+          do: {:error, %HTTPEx.Error{client: :finch, reason: error.reason, retries: retries}}
+
+        def to_response({:error, %Finch.HTTPError{} = error}, retries),
           do: {:error, %HTTPEx.Error{client: :finch, reason: error.reason, retries: retries}}
       end
     end
