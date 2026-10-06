@@ -37,7 +37,7 @@ defmodule HttpEx.MixProject do
       {:excoveralls, "~> 0.18.0", optional: true, only: :test},
       {:ex_doc, "~> 0.31", optional: true, only: :dev, runtime: false},
       {:finch, "~> 0.18", optional: true},
-      {:httpoison, "~> 2.0", optional: true},
+      {:httpoison, "~> 3.0", optional: true},
       {:nimble_ownership, "~> 1.0"},
       {:styler, "~> 1.0", optional: true, only: [:dev, :test]},
       {:sweet_xml, "~> 0.7"},
